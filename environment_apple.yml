@@ -1,0 +1,13 @@
+name: Lymphoma_Classification_Apple
+channels: [conda-forge, defaults]
+dependencies:
+  - python=3.11
+  - numpy>=1.26
+  - pandas>=2.2
+  - scikit-learn>=1.5
+  - ipykernel  
+  - pip
+  - pip:
+      - torch
+      - torchvision
+      - torchaudio

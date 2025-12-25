@@ -1,14 +1,22 @@
+#Imports
 from __future__ import annotations
 import argparse, json
 from pathlib import Path
 from typing import List, Tuple
+import sys
 import joblib
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from modules.models import MLPClassifier
 
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from modules.nn.mlp import MLPClassifier
+
+#gerät bestimmen
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device("cuda")
@@ -16,7 +24,8 @@ def get_device() -> torch.device:
         return torch.device("mps")
     return torch.device("cpu")
 
-def load_artifacts(model_path="outputs/model.pt", preproc_path="outputs/preprocessor.joblib", meta_path="outputs/meta.json"):
+#lade model und preprocessor
+def load_artifacts(model_path="outputs/nn/model.pt", preproc_path="outputs/nn/preprocessor.joblib", meta_path="outputs/nn/meta.json"):
     ckpt = torch.load(model_path, map_location="cpu")
     meta = ckpt.get("meta", {})
     n_classes = meta.get("n_classes")
@@ -38,12 +47,14 @@ def load_artifacts(model_path="outputs/model.pt", preproc_path="outputs/preproce
 
     return model, preprocessor, feature_cols, class_names
 
+#sicherstellen, dass alle benötigten spalten vorhanden sind
 def ensure_columns(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
     missing = [c for c in feature_cols if c not in df.columns]
     for c in missing:
         df[c] = np.nan
     return df[feature_cols].copy()
 
+#vorhersagen für neue daten
 @torch.no_grad()
 def predict_df(df_new: pd.DataFrame,
                model: nn.Module,
@@ -66,6 +77,7 @@ def predict_df(df_new: pd.DataFrame,
         print(f"[{i}] pred: {class_names[p]}  |  top{topk}: {top}")
     return preds, probs
 
+#interaktive eingabe einer zeile
 def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
     print("\nGib Werte zu den Features ein (leer = NA). Erwartet numerische Eingaben.")
     values = {}
@@ -74,6 +86,7 @@ def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
         values[c] = (float(val.replace(",", ".")) if val != "" else np.nan)
     return pd.DataFrame([values], columns=feature_cols)
 
+#template csv schreiben
 def write_template_csv(path: Path, feature_cols: List[str]):
     import pandas as pd
     df = pd.DataFrame(columns=feature_cols)

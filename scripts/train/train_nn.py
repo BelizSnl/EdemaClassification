@@ -18,6 +18,13 @@ from modules.prep.data_prepare import load_data, split_dataset, fit_label_encode
 from modules.prep.feature import ensure_feature
 from modules.nn.mlp import MLPClassifier
 from modules.nn.utils import set_seed, get_device, device_info, make_dataloaders
+from modules.vis.plots import (
+    plot_loss_curve,
+    plot_pca_decision_regions,
+    plot_pca_3d_scatter,
+    plot_pca_3d_correctness,
+    plot_confusion_matrix,
+)
 
 #eine epoche trainiert und validiert
 def train_one_epoch(model, loader, criterion, optimizer, device):
@@ -82,6 +89,16 @@ def main():
     ap.add_argument("--save_path", type=str, default="outputs/nn/model.pt")
     ap.add_argument("--feature", type=str, default="feature.json",
                     help="JSON-Datei mit Feature-Flags (Spaltenname -> bool). Wird automatisch erstellt/aktualisiert.")
+    ap.add_argument("--plot-loss", dest="plot_loss", type=str, default="outputs/nn/loss.png")
+    ap.add_argument("--plot-pca", dest="plot_pca", type=str, default="outputs/nn/pca_regions.png")
+    ap.add_argument("--plot-pca3d", dest="plot_pca3d", type=str, default="outputs/nn/pca_3d.html")
+    ap.add_argument(
+        "--plot-pca3d-correct",
+        dest="plot_pca3d_correct",
+        type=str,
+        default="outputs/nn/pca_3d_correctness.html",
+    )
+    ap.add_argument("--plot-cm", dest="plot_cm", type=str, default="outputs/nn/confusion_matrix.png")
     ap.add_argument(
         "--early-stop-patience",
         type=int,
@@ -131,9 +148,14 @@ def main():
     best_state = None
     best_epoch = 0
     no_improve = 0
+    history = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []}
     for epoch in range(1, args.epochs + 1):
         tr_loss, tr_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
         te_loss, te_acc, y_true_e, y_pred_e = evaluate(model, test_loader, criterion, device)
+        history["train_loss"].append(tr_loss)
+        history["train_acc"].append(tr_acc)
+        history["test_loss"].append(te_loss)
+        history["test_acc"].append(te_acc)
         prec_macro, rec_macro, f1_macro, _ = precision_recall_fscore_support(y_true_e, y_pred_e, average="macro", zero_division=0)
         prec_weighted, rec_weighted, f1_weighted, _ = precision_recall_fscore_support(y_true_e, y_pred_e, average="weighted", zero_division=0)
 
@@ -154,6 +176,9 @@ def main():
             print(f"Early Stopping nach {epoch} Epochen (bestes Test-Loss bei Epoche {best_epoch}: {best_loss:.4f})")
             break
 
+    # Plots
+    plot_loss_curve(history["train_loss"], history["test_loss"], out_path=args.plot_loss, ylabel="Loss")
+
     # finale Evaluation
     if best_state is not None:
         model.load_state_dict(best_state)
@@ -163,6 +188,43 @@ def main():
     print(f"loss={test_loss:.4f}  acc={test_acc:.4f}")
     print(classification_report(y_true, y_pred, target_names=enc.class_names, digits=4))
     print("Confusion matrix:\n", confusion_matrix(y_true, y_pred))
+    plot_confusion_matrix(y_true, y_pred, class_names=enc.class_names, out_path=args.plot_cm)
+
+    # PCA-basierte Plots (Decision Regions + 3D)
+    model_cpu = model.to("cpu").eval()
+
+    def predict_fn(arr: np.ndarray) -> np.ndarray:
+        with torch.no_grad():
+            xb = torch.tensor(arr, dtype=torch.float32)
+            logits = model_cpu(xb)
+            return logits.softmax(dim=1).argmax(dim=1).cpu().numpy()
+
+    plot_pca_decision_regions(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        y_test=y_pred,  # vorhergesagte Labels für Testpunkte (für Farbgebung)
+        class_names=enc.class_names,
+        predict_fn=predict_fn,
+        out_path=args.plot_pca,
+        cmap_background="Pastel2",
+        cmap_points="tab10",
+    )
+
+    plot_pca_3d_scatter(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        labels=y_pred,
+        class_names=enc.class_names,
+        out_path=args.plot_pca3d,
+    )
+    plot_pca_3d_correctness(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        y_true=y_true,
+        y_pred=y_pred,
+        class_names=enc.class_names,
+        out_path=args.plot_pca3d_correct,
+    )
 
     # Speichern
     Path(args.save_path).parent.mkdir(parents=True, exist_ok=True)

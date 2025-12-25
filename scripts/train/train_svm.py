@@ -24,6 +24,13 @@ from modules.prep.data_prepare import (
     scale_features,
 )
 from modules.prep.feature import ensure_feature
+from modules.vis.plots import (
+    plot_loss_curve,
+    plot_pca_decision_regions,
+    plot_pca_3d_scatter,
+    plot_pca_3d_correctness,
+    plot_confusion_matrix,
+)
 
 
 def set_seed(seed: int = 42):
@@ -58,6 +65,10 @@ def train_svm(
     class_names: List[str],
     model_path: Path,
     meta_path: Path,
+    plot_regions_path: Path,
+    plot_3d_path: Path,
+    loss_path: Path,
+    cm_path: Path,
     kernel: str,
     c_value: float,
     gamma: str,
@@ -71,10 +82,42 @@ def train_svm(
     acc = accuracy_score(enc.y_test, preds_test)
     ll_train = log_loss(enc.y_train, probs_train)
     ll_test = log_loss(enc.y_test, probs_test)
+    plot_loss_curve([ll_train], [ll_test], out_path=loss_path, ylabel="Log-Loss")
+
+    def predict_fn(arr: np.ndarray) -> np.ndarray:
+        return model.predict(arr)
+
+    plot_pca_decision_regions(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        y_test=preds_test,
+        class_names=class_names,
+        predict_fn=predict_fn,
+        out_path=plot_regions_path,
+        cmap_background="Pastel2",
+        cmap_points="tab10",
+    )
+
+    plot_pca_3d_scatter(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        labels=preds_test,
+        class_names=class_names,
+        out_path=plot_3d_path,
+    )
+    plot_pca_3d_correctness(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        y_true=enc.y_test,
+        y_pred=preds_test,
+        class_names=class_names,
+        out_path=plot_3d_path.parent / f"{plot_3d_path.stem}_correctness{plot_3d_path.suffix}",
+    )
 
     print(f"[SVM] Test-Accuracy: {acc:.4f} | Train-LogLoss={ll_train:.4f} Test-LogLoss={ll_test:.4f}")
     print(classification_report(enc.y_test, preds_test, target_names=class_names, digits=4))
     print("Confusion matrix:\n", confusion_matrix(enc.y_test, preds_test))
+    plot_confusion_matrix(enc.y_test, preds_test, class_names=class_names, out_path=cm_path)
 
     model_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path.parent.mkdir(parents=True, exist_ok=True)
@@ -108,6 +151,10 @@ def main():
     ap.add_argument("--svm-gamma", dest="svm_gamma", type=str, default="scale")
     ap.add_argument("--svm-model", dest="svm_model", type=str, default="outputs/svm/model.joblib")
     ap.add_argument("--svm-meta", dest="svm_meta", type=str, default="outputs/svm/meta.json")
+    ap.add_argument("--svm-plot", dest="svm_plot", type=str, default="outputs/svm/pca_regions.png")
+    ap.add_argument("--svm-loss-plot", dest="svm_loss_plot", type=str, default="outputs/svm/loss.png")
+    ap.add_argument("--svm-plot-3d", dest="svm_plot_3d", type=str, default="outputs/svm/pca_3d.html")
+    ap.add_argument("--svm-cm-plot", dest="svm_cm_plot", type=str, default="outputs/svm/confusion_matrix.png")
     args = ap.parse_args()
 
     set_seed(args.seed)
@@ -121,6 +168,10 @@ def main():
         class_names=class_names,
         model_path=Path(args.svm_model),
         meta_path=Path(args.svm_meta),
+        plot_regions_path=Path(args.svm_plot),
+        plot_3d_path=Path(args.svm_plot_3d),
+        loss_path=Path(args.svm_loss_plot),
+        cm_path=Path(args.svm_cm_plot),
         kernel=args.svm_kernel,
         c_value=args.svm_c,
         gamma=args.svm_gamma,

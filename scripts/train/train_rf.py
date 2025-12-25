@@ -24,6 +24,13 @@ from modules.prep.data_prepare import (
     scale_features,
 )
 from modules.prep.feature import ensure_feature
+from modules.vis.plots import (
+    plot_loss_curve,
+    plot_pca_decision_regions,
+    plot_pca_3d_scatter,
+    plot_pca_3d_correctness,
+    plot_confusion_matrix,
+)
 
 
 def set_seed(seed: int = 42):
@@ -58,6 +65,10 @@ def train_random_forest(
     class_names: List[str],
     model_path: Path,
     meta_path: Path,
+    plot_regions_path: Path,
+    plot_3d_path: Path,
+    loss_path: Path,
+    cm_path: Path,
     n_estimators: int,
     max_depth: int | None,
     min_samples_leaf: int,
@@ -79,9 +90,42 @@ def train_random_forest(
     ll_train = log_loss(enc.y_train, probs_train)
     ll_test = log_loss(enc.y_test, probs_test)
 
+    plot_loss_curve([ll_train], [ll_test], out_path=loss_path, ylabel="Log-Loss")
+
+    def predict_fn(arr: np.ndarray) -> np.ndarray:
+        return rf.predict(arr)
+
+    plot_pca_decision_regions(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        y_test=preds_test,
+        class_names=class_names,
+        predict_fn=predict_fn,
+        out_path=plot_regions_path,
+        cmap_background="Pastel2",
+        cmap_points="tab10",
+    )
+
+    plot_pca_3d_scatter(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        labels=preds_test,
+        class_names=class_names,
+        out_path=plot_3d_path,
+    )
+    plot_pca_3d_correctness(
+        X_train=prep.X_train,
+        X_test=prep.X_test,
+        y_true=enc.y_test,
+        y_pred=preds_test,
+        class_names=class_names,
+        out_path=plot_3d_path.parent / f"{plot_3d_path.stem}_correctness{plot_3d_path.suffix}",
+    )
+
     print(f"[RF] Test-Accuracy: {acc:.4f} | Train-LogLoss={ll_train:.4f} Test-LogLoss={ll_test:.4f}")
     print(classification_report(enc.y_test, preds_test, target_names=class_names, digits=4))
     print("Confusion matrix:\n", confusion_matrix(enc.y_test, preds_test))
+    plot_confusion_matrix(enc.y_test, preds_test, class_names=class_names, out_path=cm_path)
 
     model_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path.parent.mkdir(parents=True, exist_ok=True)
@@ -116,6 +160,10 @@ def main():
     ap.add_argument("--rf-n-jobs", dest="rf_n_jobs", type=int, default=-1)
     ap.add_argument("--rf-model", dest="rf_model", type=str, default="outputs/rf/model.joblib")
     ap.add_argument("--rf-meta", dest="rf_meta", type=str, default="outputs/rf/meta.json")
+    ap.add_argument("--rf-plot", dest="rf_plot", type=str, default="outputs/rf/pca_regions.png")
+    ap.add_argument("--rf-plot-3d", dest="rf_plot_3d", type=str, default="outputs/rf/pca_3d.html")
+    ap.add_argument("--rf-loss-plot", dest="rf_loss_plot", type=str, default="outputs/rf/loss.png")
+    ap.add_argument("--rf-cm-plot", dest="rf_cm_plot", type=str, default="outputs/rf/confusion_matrix.png")
     args = ap.parse_args()
 
     set_seed(args.seed)
@@ -129,6 +177,10 @@ def main():
         class_names=class_names,
         model_path=Path(args.rf_model),
         meta_path=Path(args.rf_meta),
+        plot_regions_path=Path(args.rf_plot),
+        plot_3d_path=Path(args.rf_plot_3d),
+        loss_path=Path(args.rf_loss_plot),
+        cm_path=Path(args.rf_cm_plot),
         n_estimators=args.rf_n_estimators,
         max_depth=args.rf_max_depth,
         min_samples_leaf=args.rf_min_samples_leaf,

@@ -70,7 +70,7 @@ def save_artifacts(preprocessor, class_names, feature_cols,
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", type=str, default="Lymphdoc_medi_gesammtdaten.csv")
+    ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--batch_size", type=int, default=64)

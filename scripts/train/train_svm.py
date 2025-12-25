@@ -92,7 +92,7 @@ def train_svm(
 
 def main():
     ap = argparse.ArgumentParser(description="SVM-Training für LymphDot")
-    ap.add_argument("--data", type=str, default="Lymphdoc_medi_gesammtdaten.csv")
+    ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")
     ap.add_argument("--test_size", type=float, default=0.2)
     ap.add_argument("--seed", type=int, default=42)

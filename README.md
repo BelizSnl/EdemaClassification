@@ -23,7 +23,7 @@ LymphdotProject/
 ## Training
 ```bash
 conda activate Lymphoma_Classification_Apple
-python train.py --data Lymphdoc_medi_gesammtdaten.csv --target Klassifizierung --epochs 30
+python train.py --data Lymphdoc_medi_4k.csv --target Klassifizierung --epochs 30
 ```
 
 Artefakte landen in `outputs/`:

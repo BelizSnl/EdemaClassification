@@ -75,6 +75,22 @@ def encode_labels(y_train: pd.Series, y_test: pd.Series, name_to_idx: Dict[str, 
 
 # ---------- Skalierung ----------
 def scale_features(X_train_df: pd.DataFrame, X_test_df: pd.DataFrame) -> PreprocessResult:
+    # Kopien anlegen, damit wir Spalten gefahrlos transformieren können
+    X_train_df = X_train_df.copy()
+    X_test_df = X_test_df.copy()
+
+    # Geschlecht als numerisch kodieren (männlich=0, weiblich=1)
+    if "Geschlecht" in X_train_df.columns:
+        gender_map = {"männlich": 0, "weiblich": 1}
+
+        def _map_gender(series: pd.Series) -> pd.Series:
+            return series.apply(
+                lambda v: gender_map.get(str(v).strip().lower()) if pd.notna(v) else np.nan
+            )
+
+        X_train_df["Geschlecht"] = _map_gender(X_train_df["Geschlecht"])
+        X_test_df["Geschlecht"] = _map_gender(X_test_df["Geschlecht"])
+
     num_cols = X_train_df.select_dtypes(include=["number", "bool"]).columns.tolist()
     bin_cols = [c for c in num_cols if X_train_df[c].dropna().isin([0, 1]).all() and X_train_df[c].nunique(dropna=True) <= 2]
     cont_cols = [c for c in num_cols if c not in bin_cols]
@@ -91,4 +107,3 @@ def scale_features(X_train_df: pd.DataFrame, X_test_df: pd.DataFrame) -> Preproc
     X_train = pre.fit_transform(X_train_df).astype("float32")
     X_test  = pre.transform(X_test_df).astype("float32")
     return PreprocessResult(X_train=X_train, X_test=X_test, preprocessor=pre, cont_cols=cont_cols, bin_cols=bin_cols)
-

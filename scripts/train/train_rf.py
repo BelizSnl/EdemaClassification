@@ -58,6 +58,17 @@ def prepare_data(
     return split.feature_cols, enc, prep
 
 
+def compute_class_centers(X: np.ndarray, y: np.ndarray, n_classes: int) -> List[List[float]]:
+    centers: List[List[float]] = []
+    for idx in range(n_classes):
+        mask = y == idx
+        if not np.any(mask):
+            centers.append([float("nan")] * X.shape[1])
+        else:
+            centers.append(np.mean(X[mask], axis=0).tolist())
+    return centers
+
+
 def train_random_forest(
     feature_cols: List[str],
     enc,
@@ -127,6 +138,7 @@ def train_random_forest(
     print("Confusion matrix:\n", confusion_matrix(enc.y_test, preds_test))
     plot_confusion_matrix(enc.y_test, preds_test, class_names=class_names, out_path=cm_path)
 
+    class_centers = compute_class_centers(prep.X_train, enc.y_train, len(class_names))
     model_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path.parent.mkdir(parents=True, exist_ok=True)
     payload: Dict[str, object] = {
@@ -134,6 +146,8 @@ def train_random_forest(
         "preprocessor": prep.preprocessor,
         "feature_cols": feature_cols,
         "class_names": class_names,
+        "col_bounds": prep.col_bounds,
+        "class_centers": class_centers,
     }
     joblib.dump(payload, model_path)
     with open(meta_path, "w", encoding="utf-8") as fh:

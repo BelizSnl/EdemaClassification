@@ -34,6 +34,7 @@ class PreprocessResult:
     preprocessor: ColumnTransformer
     cont_cols: List[str]
     bin_cols: List[str]
+    col_bounds: Dict[str, Tuple[float, float]]
 
 # ---------------- Dataset -----------------
 def load_data(data_path):
@@ -92,6 +93,27 @@ def scale_features(X_train_df: pd.DataFrame, X_test_df: pd.DataFrame) -> Preproc
         X_test_df["Geschlecht"] = _map_gender(X_test_df["Geschlecht"])
 
     num_cols = X_train_df.select_dtypes(include=["number", "bool"]).columns.tolist()
+
+    # Per-Feature-Grenzen aus Trainingsdaten ableiten (robust über Quantile)
+    col_bounds: Dict[str, Tuple[float, float]] = {}
+    for col in num_cols:
+        s = X_train_df[col].dropna()
+        if s.empty:
+            continue
+        lower = float(s.quantile(0.01))
+        upper = float(s.quantile(0.99))
+        # Fallbacks bei degenerierten Quantilen
+        if not np.isfinite(lower):
+            lower = float(s.min())
+        if not np.isfinite(upper):
+            upper = float(s.max())
+        if lower > upper:
+            lower, upper = upper, lower
+        col_bounds[col] = (lower, upper)
+        X_train_df[col] = X_train_df[col].clip(lower, upper)
+        if col in X_test_df:
+            X_test_df[col] = X_test_df[col].clip(lower, upper)
+
     bin_cols = [c for c in num_cols if X_train_df[c].dropna().isin([0, 1]).all() and X_train_df[c].nunique(dropna=True) <= 2]
     cont_cols = [c for c in num_cols if c not in bin_cols]
 
@@ -106,4 +128,11 @@ def scale_features(X_train_df: pd.DataFrame, X_test_df: pd.DataFrame) -> Preproc
     pre = ColumnTransformer(transformers=transformers, remainder="drop")
     X_train = pre.fit_transform(X_train_df).astype("float32")
     X_test  = pre.transform(X_test_df).astype("float32")
-    return PreprocessResult(X_train=X_train, X_test=X_test, preprocessor=pre, cont_cols=cont_cols, bin_cols=bin_cols)
+    return PreprocessResult(
+        X_train=X_train,
+        X_test=X_test,
+        preprocessor=pre,
+        cont_cols=cont_cols,
+        bin_cols=bin_cols,
+        col_bounds=col_bounds,
+    )

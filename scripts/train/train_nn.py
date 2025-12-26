@@ -65,11 +65,19 @@ def evaluate(model, loader, criterion, device):
     return running_loss / total, correct / total, y_true, y_pred
 
 #artefakte speichern
-def save_artifacts(preprocessor, class_names, feature_cols,
+def save_artifacts(preprocessor, class_names, feature_cols, col_bounds, class_centers,
                    preproc_path: str = "outputs/nn/preprocessor.joblib",
                    meta_path: str = "outputs/nn/meta.json"):
     Path(preproc_path).parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump({"preprocessor": preprocessor, "feature_cols": feature_cols}, preproc_path)
+    joblib.dump(
+        {
+            "preprocessor": preprocessor,
+            "feature_cols": feature_cols,
+            "col_bounds": col_bounds,
+            "class_centers": class_centers,
+        },
+        preproc_path,
+    )
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump({"class_names": class_names}, f, ensure_ascii=False, indent=2)
     print(f"Artefakte gespeichert: {preproc_path}, {meta_path}")
@@ -238,7 +246,17 @@ def main():
             }}
     torch.save({"state_dict": model.state_dict(), "meta": meta}, args.save_path)
     print(f"Gespeichert: {args.save_path}")
-    save_artifacts(prep.preprocessor, enc.class_names, split.feature_cols)
+    # Klassen-Zentren im skalierten Raum für spätere Distanz-Gewichte speichern
+    def compute_class_centers(X: np.ndarray, y: np.ndarray, n_classes: int):
+        centers = []
+        for idx in range(n_classes):
+            mask = y == idx
+            centers.append(np.mean(X[mask], axis=0).tolist() if np.any(mask) else [float("nan")] * X.shape[1])
+        return centers
+
+    class_centers = compute_class_centers(prep.X_train, enc.y_train, n_classes)
+
+    save_artifacts(prep.preprocessor, enc.class_names, split.feature_cols, prep.col_bounds, class_centers)
 
 if __name__ == "__main__":
     main()

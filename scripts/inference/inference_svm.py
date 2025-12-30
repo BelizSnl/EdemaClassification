@@ -151,13 +151,13 @@ def main():
     ap.add_argument(
         "--ood-threshold",
         type=float,
-        default=6.0,
+        default=5.0,
         help="Maximaler |z|-Wert im standardisierten Raum bevor als OOD markiert (<=0 deaktiviert).",
     )
     ap.add_argument(
         "--dist-mix",
         type=float,
-        default=0.3,
+        default=0.2,
         help="Mischungsanteil der Distanz-Gewichte (0 = aus).",
     )
     ap.add_argument(

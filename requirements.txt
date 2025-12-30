@@ -5,3 +5,4 @@ torch
 torchvision
 torchaudio
 joblib
+PyQt5

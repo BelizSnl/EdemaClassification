@@ -179,9 +179,9 @@ def write_template_csv(path: Path, feature_cols: List[str]):
 
 def main():
     ap = argparse.ArgumentParser(description="Inference for Lymphdot")
-    ap.add_argument("--model", default="outputs/model.pt")
-    ap.add_argument("--preproc", default="outputs/preprocessor.joblib")
-    ap.add_argument("--meta", default="outputs/meta.json")
+    ap.add_argument("--model", default="outputs/nn/model.pt")
+    ap.add_argument("--preproc", default="outputs/nn/preprocessor.joblib")
+    ap.add_argument("--meta", default="outputs/nn/meta.json")
     ap.add_argument("--csv", type=str, help="CSV mit neuen Fällen (gleiche Roh-Feature-Spalten wie im Training).")
     ap.add_argument("--interactive", action="store_true", help="Interaktiv einen Fall im Terminal eingeben.")
     ap.add_argument("--template", type=str, help="Erzeuge Template-CSV für Eingaben.")
@@ -189,13 +189,13 @@ def main():
     ap.add_argument(
         "--ood-threshold",
         type=float,
-        default=6.0,
+        default=5.0,
         help="Maximaler |z|-Wert im standardisierten Raum bevor als OOD markiert (<=0 deaktiviert).",
     )
     ap.add_argument(
         "--dist-mix",
         type=float,
-        default=0.3,
+        default=0.2,
         help="Mischungsanteil der Distanz-Gewichte (0 = aus).",
     )
     ap.add_argument(

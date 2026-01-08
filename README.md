@@ -44,7 +44,7 @@ Artefakte landen in `outputs/`:
   ```
 
 ## GUI (PyQt5) mit Soft-Voting
-- Start: `python scripts/inference/gui.py`
+- Start: `python gui/gui.py`
 - Wählt per Button eine CSV (gleiche Spalten wie im Training) oder gibt alle Features manuell ein.
 - Im Hintergrund holt `scripts/inference/inference_main.py` die Wahrscheinlichkeiten von NN, SVM und RF und mittelt sie per Soft-Voting.
 - Die aggregierte Verteilung pro Zeile wird als Popup angezeigt (Top-Klassen mit Wahrscheinlichkeiten).

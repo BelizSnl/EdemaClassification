@@ -87,7 +87,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")
-    ap.add_argument("--epochs", type=int, default=40)
+    ap.add_argument("--epochs", type=int, default=70)
     ap.add_argument("--batch_size", type=int, default=64)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--weight_decay", type=float, default=1e-4)
@@ -192,8 +192,18 @@ def main():
         model.load_state_dict(best_state)
         print(f"Modell auf bestes Test-Loss zurückgesetzt (Epoche {best_epoch}, loss={best_loss:.4f})")
     test_loss, test_acc, y_true, y_pred = evaluate(model, test_loader, criterion, device)
+    prec_macro, rec_macro, f1_macro, _ = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", zero_division=0
+    )
+    prec_weighted, rec_weighted, f1_weighted, _ = precision_recall_fscore_support(
+        y_true, y_pred, average="weighted", zero_division=0
+    )
     print("\n=== TEST REPORT ===")
     print(f"loss={test_loss:.4f}  acc={test_acc:.4f}")
+    print(
+        f"Macro: P={prec_macro:.4f} R={rec_macro:.4f} F1={f1_macro:.4f} | "
+        f"Weighted: P={prec_weighted:.4f} R={rec_weighted:.4f} F1={f1_weighted:.4f}"
+    )
     print(classification_report(y_true, y_pred, target_names=enc.class_names, digits=4))
     print("Confusion matrix:\n", confusion_matrix(y_true, y_pred))
     plot_confusion_matrix(y_true, y_pred, class_names=enc.class_names, out_path=args.plot_cm)

@@ -9,7 +9,13 @@ from typing import List, Dict
 
 import joblib
 import numpy as np
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, log_loss
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    log_loss,
+    precision_recall_fscore_support,
+)
 from sklearn.svm import SVC
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -93,6 +99,12 @@ def train_svm(
     acc = accuracy_score(enc.y_test, preds_test)
     ll_train = log_loss(enc.y_train, probs_train)
     ll_test = log_loss(enc.y_test, probs_test)
+    prec_macro, rec_macro, f1_macro, _ = precision_recall_fscore_support(
+        enc.y_test, preds_test, average="macro", zero_division=0
+    )
+    prec_weighted, rec_weighted, f1_weighted, _ = precision_recall_fscore_support(
+        enc.y_test, preds_test, average="weighted", zero_division=0
+    )
     plot_loss_curve([ll_train], [ll_test], out_path=loss_path, ylabel="Log-Loss")
 
     def predict_fn(arr: np.ndarray) -> np.ndarray:
@@ -126,6 +138,10 @@ def train_svm(
     )
 
     print(f"[SVM] Test-Accuracy: {acc:.4f} | Train-LogLoss={ll_train:.4f} Test-LogLoss={ll_test:.4f}")
+    print(
+        f"[SVM] Macro: P={prec_macro:.4f} R={rec_macro:.4f} F1={f1_macro:.4f} | "
+        f"Weighted: P={prec_weighted:.4f} R={rec_weighted:.4f} F1={f1_weighted:.4f}"
+    )
     print(classification_report(enc.y_test, preds_test, target_names=class_names, digits=4))
     print("Confusion matrix:\n", confusion_matrix(enc.y_test, preds_test))
     plot_confusion_matrix(enc.y_test, preds_test, class_names=class_names, out_path=cm_path)

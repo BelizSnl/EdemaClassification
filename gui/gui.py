@@ -113,9 +113,6 @@ QMainWindow {
 
 #base {
     background-color: #f5f6fa;
-    background-image: url('""" + logo_url + """');
-    background-repeat: no-repeat;
-    background-position: center;
 }
 
 QTabWidget::pane {
@@ -181,13 +178,35 @@ QScrollArea {
     border: none;
     background: transparent;
 }
+
+QScrollBar {
+    width: 10px;
+    background: #e5e7eb;
+    border-radius: 5px;
+}
+
+QScrollBar::handle {
+    background: #cbd5e1;
+    border-radius: 5px;
+    min-height: 24px;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    background: transparent;
+    height: 0px;
+}
+
+QScrollBar::add-page, QScrollBar::sub-page {
+    background: #e5e7eb;
+    border-radius: 5px;
+}
 """
 
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("LymphDot Inferenz (Soft-Voting)")
+        self.setWindowTitle("Benutzeroberfläche")
         self.ensemble = EnsembleInference()
         self.topk = 3
         self.inputs: Dict[str, QtWidgets.QLineEdit] = {}
@@ -205,6 +224,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pending_path: str | None = None
         self.uploaded_files: list[str] = []
         self.file_list_layout: QtWidgets.QVBoxLayout | None = None
+        self.file_list_container: QtWidgets.QFrame | None = None
+        self.list_label_widget: QtWidgets.QLabel | None = None
         self.file_items: Dict[str, Dict[str, object]] = {}
         self.start_btn: QtWidgets.QPushButton | None = None
         self._init_ui()
@@ -213,20 +234,65 @@ class MainWindow(QtWidgets.QMainWindow):
         container = QtWidgets.QWidget()
         container.setObjectName("base")
         outer_layout = QtWidgets.QVBoxLayout(container)
-        outer_layout.setContentsMargins(20, 20, 20, 20)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
 
-        tabs = QtWidgets.QTabWidget()
-        tabs.addTab(self._build_csv_tab(), "CSV hochladen")
-        tabs.addTab(self._build_manual_tab(), "Manuelle Eingabe")
-        outer_layout.addWidget(tabs)
+        # Top bar
+        top_bar = QtWidgets.QFrame()
+        bg_path = (ROOT / "gui" / "hintergrund_leiste_cropped.png").as_posix()
+        top_bar.setStyleSheet(
+            f"QFrame {{ background-color: #0d4e6b; background-image: url('{bg_path}'); "
+            f"background-repeat: no-repeat; background-position: center center; background-size: 100% 140px; }}"
+        )
+        top_bar.setFixedHeight(140)
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setXOffset(0)
+        shadow.setYOffset(4)
+        shadow.setColor(QtGui.QColor(0, 0, 0, 40))
+        top_bar.setGraphicsEffect(shadow)
+        bar_layout = QtWidgets.QHBoxLayout(top_bar)
+        bar_layout.setContentsMargins(24, 20, 24, 20)
+
+        bar_layout.addStretch(2)
+        title = QtWidgets.QLabel("Stadieneinteilung von Lipödem, Lymphödem und Lipo-Lymphödem")
+        title.setStyleSheet("font-size: 30px; font-weight: 400; color: #ffffff;")
+        bar_layout.addWidget(title, alignment=QtCore.Qt.AlignCenter)
+        bar_layout.addStretch(1)
+
+        hsd_logo_path = ROOT / "gui" / "HSDLOGO.png"
+        if hsd_logo_path.exists():
+            logo_lbl = QtWidgets.QLabel()
+            pix = QtGui.QPixmap(str(hsd_logo_path)).scaled(192, 192, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+            logo_lbl.setPixmap(pix)
+            logo_lbl.setStyleSheet("background: transparent;")
+            logo_lbl.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            logo_lbl.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            bar_layout.addWidget(logo_lbl)
+
+        outer_layout.addWidget(top_bar)
+
+        content_wrapper = QtWidgets.QWidget()
+        content_layout = QtWidgets.QVBoxLayout(content_wrapper)
+        content_layout.setContentsMargins(20, 20, 20, 20)
+        content_layout.addWidget(self._build_manual_tab())
+        outer_layout.addWidget(content_wrapper)
         self.setCentralWidget(container)
         self.setMinimumSize(1200, 800)
 
-    def _build_csv_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QHBoxLayout(widget)
-        layout.setAlignment(QtCore.Qt.AlignTop)
-        layout.setSpacing(24)
+    def _build_upload_section(self) -> QtWidgets.QWidget:
+        frame = QtWidgets.QFrame()
+        frame.setObjectName("uploadFrame")
+        frame.setStyleSheet("#uploadFrame { border: 1px solid #d7dce5; border-radius: 8px; background: transparent; }")
+        main_layout = QtWidgets.QVBoxLayout(frame)
+        main_layout.setContentsMargins(12, 12, 12, 12)
+        main_layout.setSpacing(10)
+        title_upload = QtWidgets.QLabel("CSV Eingabe")
+        title_upload.setStyleSheet("font-size: 22px; font-weight: 700; padding: 6px 0; color: #111827;")
+        main_layout.addWidget(title_upload, alignment=QtCore.Qt.AlignLeft)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+        layout.setSpacing(8)
 
         # Linke Seite: Drop-Card
         left = QtWidgets.QVBoxLayout()
@@ -327,25 +393,28 @@ class MainWindow(QtWidgets.QMainWindow):
         list_label = QtWidgets.QLabel("Hochgeladene Dateien")
         list_label.setStyleSheet("font-size: 14px; font-weight: 700; color: #111827;")
         right.addWidget(list_label)
+        self.list_label_widget = list_label
 
         file_icon_path = ROOT / "gui" / "file.png"
         self.file_icon = QtGui.QPixmap(str(file_icon_path)).scaled(20, 20, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
 
         list_container = QtWidgets.QFrame()
-        list_container.setStyleSheet("QFrame { border: 1px solid #d7dce5; border-radius: 8px; background: #ffffff; }")
-        list_container.setFixedSize(320, 320)
+        list_container.setStyleSheet("QFrame { border: 1px solid #f5f9fe; border-radius: 8px; background: transparent; }")
+        list_container.setFixedSize(420, 320)
         list_layout = QtWidgets.QVBoxLayout(list_container)
         list_layout.setContentsMargins(8, 8, 8, 8)
         list_layout.setSpacing(8)
         list_layout.addStretch()
         self.file_list_layout = list_layout
+        self.file_list_container = list_container
         right.addWidget(list_container)
 
         right.addStretch()
-        start_btn = QtWidgets.QPushButton("Start")
+        start_btn = QtWidgets.QPushButton("Vorhersage berechnen")
         start_btn.setCursor(QtCore.Qt.PointingHandCursor)
+        start_btn.setFixedWidth(200)
         start_btn.setStyleSheet(
-            "QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 12px 18px; font-weight: 600; }"
+            "QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 12px 14px; font-weight: 600; }"
             "QPushButton:hover { background: #1d4ed8; }"
             "QPushButton:pressed { background: #1e40af; }"
         )
@@ -353,9 +422,18 @@ class MainWindow(QtWidgets.QMainWindow):
         right.addWidget(start_btn)
         self.start_btn = start_btn
 
+        # Initial hiding until first upload
+        if self.list_label_widget:
+            self.list_label_widget.hide()
+        if self.file_list_container:
+            self.file_list_container.hide()
+        if self.start_btn:
+            self.start_btn.hide()
+
         layout.addLayout(left)
         layout.addLayout(right)
-        return widget
+        main_layout.addLayout(layout)
+        return frame
 
     def _build_manual_tab(self) -> QtWidgets.QWidget:
         content = QtWidgets.QWidget()
@@ -363,19 +441,45 @@ class MainWindow(QtWidgets.QMainWindow):
         content.setStyleSheet("#manualContent { background: #f5f6fa; color: #111827; }")
         layout = QtWidgets.QVBoxLayout(content)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(18)
+        layout.setSpacing(22)
+
+        upload_section = self._build_upload_section()
+        layout.addWidget(upload_section)
+        or_container = QtWidgets.QWidget()
+        or_layout = QtWidgets.QHBoxLayout(or_container)
+        or_layout.setContentsMargins(0, 8, 0, 12)
+        or_layout.setSpacing(12)
+        line_left = QtWidgets.QFrame()
+        line_left.setFixedHeight(1)
+        line_left.setStyleSheet("QFrame { background-color: #d7dce5; border: none; }")
+        line_right = QtWidgets.QFrame()
+        line_right.setFixedHeight(1)
+        line_right.setStyleSheet("QFrame { background-color: #d7dce5; border: none; }")
+        or_label = QtWidgets.QLabel("ODER")
+        or_label.setStyleSheet("font-size: 22px; font-weight: 700; color: #111827; padding: 6px 0;")
+        or_layout.addWidget(line_left, 1)
+        or_layout.addWidget(or_label)
+        or_layout.addWidget(line_right, 1)
+        layout.addWidget(or_container)
+
+        form_frame = QtWidgets.QFrame()
+        form_frame.setObjectName("formFrame")
+        form_frame.setStyleSheet("#formFrame { border: 1px solid #d7dce5; border-radius: 8px; background: transparent; }")
+        form_layout = QtWidgets.QVBoxLayout(form_frame)
+        form_layout.setContentsMargins(12, 12, 12, 12)
+        form_layout.setSpacing(18)
 
         def add_section_title(text: str):
             title = QtWidgets.QLabel(text)
             title.setStyleSheet("font-size: 16px; font-weight: 700; padding: 4px 0;")
-            layout.addWidget(title)
+            form_layout.addWidget(title)
 
         def add_divider():
             line = QtWidgets.QFrame()
             line.setFrameShape(QtWidgets.QFrame.HLine)
             line.setFrameShadow(QtWidgets.QFrame.Sunken)
             line.setStyleSheet("color: #d7dce5;")
-            layout.addWidget(line)
+            form_layout.addWidget(line)
 
         def add_single_row(label: str, col: str):
             row = QtWidgets.QHBoxLayout()
@@ -386,7 +490,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.inputs[col] = edit
             row.addWidget(lbl)
             row.addWidget(edit)
-            layout.addLayout(row)
+            form_layout.addLayout(row)
 
         def add_pair_row(label: str, col_left: str, col_right: str):
             row = QtWidgets.QHBoxLayout()
@@ -413,12 +517,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
             row.addLayout(left_box)
             row.addLayout(right_box)
-            layout.addLayout(row)
+            form_layout.addLayout(row)
 
         # Überschrift
         header = QtWidgets.QLabel("Messdaten")
         header.setStyleSheet("font-size: 22px; font-weight: 700; padding: 6px 0;")
-        layout.addWidget(header)
+        form_layout.addWidget(header)
 
         # Grundlagen
         add_section_title("Grundlagen")
@@ -453,6 +557,34 @@ class MainWindow(QtWidgets.QMainWindow):
             ("Hüfte cH", "Hüfte cH"),
         ]:
             add_single_row(label, col)
+
+        # Referenzgrafiken für Umfangsmessung
+        illustration_row = QtWidgets.QHBoxLayout()
+        illustration_row.setSpacing(16)
+        illustration_row.setAlignment(QtCore.Qt.AlignCenter)
+        has_illustration = False
+        for img_name in ["Medi_arm.png", "Medi_bein.png"]:
+            img_path = ROOT / "gui" / img_name
+            if not img_path.exists():
+                continue
+            pix = QtGui.QPixmap(str(img_path))
+            if pix.isNull():
+                continue
+            lbl = QtWidgets.QLabel()
+            lbl.setAlignment(QtCore.Qt.AlignCenter)
+            lbl.setPixmap(pix.scaled(320, 260, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+            lbl.setStyleSheet(
+                "QLabel {"
+                " background: #ffffff;"
+                " border: 1px solid #2563eb;"
+                " border-radius: 8px;"
+                " padding: 8px;"
+                "}"
+            )
+            illustration_row.addWidget(lbl)
+            has_illustration = True
+        if has_illustration:
+            form_layout.addLayout(illustration_row)
         add_divider()
 
         # Symptome
@@ -474,6 +606,8 @@ class MainWindow(QtWidgets.QMainWindow):
             add_section_title("Weitere Angaben")
             for col in remaining:
                 add_single_row(col, col)
+
+        layout.addWidget(form_frame)
 
         layout.addStretch()
         btn = QtWidgets.QPushButton("Vorhersage berechnen")
@@ -506,9 +640,144 @@ class MainWindow(QtWidgets.QMainWindow):
                 values[col] = np.nan
         return pd.DataFrame([values], columns=self.ensemble.feature_cols)
 
-    def _show_summary(self, summary: List[str]):
-        msg = "\n".join(summary)
-        QtWidgets.QMessageBox.information(self, "Vorhersage", msg)
+    def _show_message(
+        self,
+        title: str,
+        text: str,
+        icon: QtWidgets.QMessageBox.Icon = QtWidgets.QMessageBox.Information,
+    ) -> None:
+        box = QtWidgets.QMessageBox(self)
+        box.setWindowTitle(title)
+        box.setText(text)
+        box.setIcon(icon)
+        box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        box.setStyleSheet(
+            "QMessageBox { background-color: #ffffff; font-family: 'Segoe UI', 'Helvetica Neue', Arial; font-size: 14px; color: #111827; }"
+            "QLabel { color: #111827; }"
+            "QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 600; min-width: 80px; }"
+            "QPushButton:hover { background: #1d4ed8; }"
+            "QPushButton:pressed { background: #1e40af; }"
+        )
+        box.exec_()
+
+    def _prepare_entries(self, result: Dict[str, object], header: str | None = None) -> list[tuple[str, list[tuple[str, str]]]]:
+        class_names = result.get("class_names")
+        probs = result.get("avg_probs")
+        preds = result.get("preds")
+        if class_names is None or probs is None or preds is None:
+            fallback = result.get("summary", [])  # type: ignore[arg-type]
+            text_lines = fallback if isinstance(fallback, list) else [str(fallback)]
+            return [(header or "Vorhersage", [(line, "") for line in text_lines])]
+
+        probs_arr = np.asarray(probs)
+        preds_arr = np.asarray(preds)
+        entries: list[tuple[str, list[tuple[str, str]]]] = []
+        for i in range(len(preds_arr)):
+            lines: list[tuple[str, str]] = []
+            order = probs_arr[i].argsort()[::-1][: self.topk]
+            for idx in order:
+                lines.append((class_names[int(idx)], f"{probs_arr[i][idx] * 100:.1f}%"))
+            title = header or "Vorhersage"
+            if len(probs_arr) > 1:
+                title = f"{title} — Fall {i + 1}"
+            entries.append((title, lines))
+        return entries
+
+    def _build_result_card(self, title: str, rows: list[tuple[str, str]]) -> QtWidgets.QFrame:
+        card = QtWidgets.QFrame()
+        card.setStyleSheet(
+            "QFrame { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; }"
+        )
+        card.setMinimumWidth(420)
+        lay = QtWidgets.QVBoxLayout(card)
+        lay.setContentsMargins(18, 16, 18, 16)
+        lay.setSpacing(12)
+
+        # Header row: badge + title
+        header_row = QtWidgets.QHBoxLayout()
+        header_row.setSpacing(8)
+        badge = QtWidgets.QLabel("PREDICTION")
+        badge.setStyleSheet(
+            "background: #e0edff; color: #2563eb; font-size: 11px; font-weight: 700; "
+            "padding: 4px 8px; border-radius: 8px; letter-spacing: 0.5px;"
+        )
+        header_row.addWidget(badge, 0, QtCore.Qt.AlignLeft)
+        header_row.addStretch()
+        lay.addLayout(header_row)
+
+        header = QtWidgets.QLabel(title)
+        header.setFrameStyle(QtWidgets.QFrame.NoFrame)
+        header.setStyleSheet("font-size: 17px; font-weight: 700; color: #111827; border: none; background: transparent;")
+        lay.addWidget(header)
+
+        line = QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.NoFrame)
+        line.setFrameShadow(QtWidgets.QFrame.Plain)
+        line.setFixedHeight(2)
+        line.setStyleSheet("background-color: #e5e7eb; border: none;")
+        lay.addWidget(line)
+
+        for label, value in rows:
+            row = QtWidgets.QHBoxLayout()
+            row.setSpacing(8)
+            lbl = QtWidgets.QLabel(label)
+            lbl.setFrameStyle(QtWidgets.QFrame.NoFrame)
+            lbl.setStyleSheet("color: #6b7280; font-size: 13px; background: transparent; border: none; padding: 0;")
+            val = QtWidgets.QLabel(value)
+            val.setFrameStyle(QtWidgets.QFrame.NoFrame)
+            val.setStyleSheet("color: #111827; font-weight: 700; font-size: 15px; background: transparent; border: none; padding: 0;")
+            row.addWidget(lbl)
+            row.addStretch()
+            row.addWidget(val, 0, QtCore.Qt.AlignRight)
+            lay.addLayout(row)
+
+        return card
+
+    def _show_result_dialog(self, entries: list[tuple[str, list[tuple[str, str]]]]) -> None:
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Vorhersage")
+        dialog.setModal(True)
+        dialog.setStyleSheet(
+            "QDialog { background: #f1f5f9; font-family: 'Segoe UI', 'Helvetica Neue', Arial; font-size: 14px; }"
+            "QScrollArea { border: none; background: transparent; }"
+            "QScrollArea > QWidget > QWidget { background: transparent; }"
+            "QScrollBar { width: 10px; background: #e5e7eb; border-radius: 5px; }"
+            "QScrollBar::handle { background: #cbd5e1; border-radius: 5px; min-height: 24px; }"
+            "QScrollBar::add-line, QScrollBar::sub-line { background: transparent; height: 0px; }"
+            "QScrollBar::add-page, QScrollBar::sub-page { background: #e5e7eb; border-radius: 5px; }"
+            "QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; }"
+            "QPushButton:hover { background: #1d4ed8; }"
+            "QPushButton:pressed { background: #1e40af; }"
+        )
+
+        outer_layout = QtWidgets.QVBoxLayout(dialog)
+        outer_layout.setContentsMargins(20, 20, 20, 20)
+        outer_layout.setSpacing(14)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background: transparent; }")
+        wrapper = QtWidgets.QWidget()
+        vbox = QtWidgets.QVBoxLayout(wrapper)
+        vbox.setContentsMargins(0, 0, 10, 0)
+        vbox.setSpacing(12)
+
+        for title, rows in entries:
+            vbox.addWidget(self._build_result_card(title, rows))
+
+        scroll.setWidget(wrapper)
+        outer_layout.addWidget(scroll)
+
+        btn_row = QtWidgets.QHBoxLayout()
+        btn_row.addStretch()
+        ok_btn = QtWidgets.QPushButton("OK")
+        ok_btn.clicked.connect(dialog.accept)
+        btn_row.addWidget(ok_btn)
+        outer_layout.addLayout(btn_row)
+
+        dialog.resize(520, 480)
+        dialog.exec_()
 
     def _on_csv_clicked(self):
         path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "CSV auswählen", "", "CSV Dateien (*.csv)")
@@ -566,6 +835,24 @@ class MainWindow(QtWidgets.QMainWindow):
     def _add_uploaded_file(self, path: str):
         if path not in self.uploaded_files:
             self.uploaded_files.append(path)
+            if len(self.uploaded_files) == 1:
+                self._show_upload_widgets()
+
+    def _remove_uploaded_file(self, path: str):
+        if path in self.uploaded_files:
+            self.uploaded_files.remove(path)
+        entry = self.file_items.pop(path, None)
+        if entry and "row" in entry and isinstance(entry["row"], QtWidgets.QWidget):
+            row_widget: QtWidgets.QWidget = entry["row"]  # type: ignore[assignment]
+            row_widget.setParent(None)
+            row_widget.deleteLater()
+        if not self.uploaded_files:
+            if self.list_label_widget:
+                self.list_label_widget.hide()
+            if self.file_list_container:
+                self.file_list_container.hide()
+            if self.start_btn:
+                self.start_btn.hide()
 
     def _ensure_file_item(self, path: str):
         if path in self.file_items or not self.file_list_layout:
@@ -582,12 +869,24 @@ class MainWindow(QtWidgets.QMainWindow):
         texts = QtWidgets.QVBoxLayout()
         name_lbl = QtWidgets.QLabel(name)
         name_lbl.setStyleSheet("font-size: 13px; font-weight: 600; color: #111827;")
+        name_lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         status_lbl = QtWidgets.QLabel("Uploading (0%)")
         status_lbl.setStyleSheet("color: #2563eb; font-size: 12px;")
         texts.addWidget(name_lbl)
         texts.addWidget(status_lbl)
-        h.addLayout(texts)
+        h.addLayout(texts, 1)
         h.addStretch()
+
+        delete_btn = QtWidgets.QPushButton("Löschen")
+        delete_btn.setCursor(QtCore.Qt.PointingHandCursor)
+        delete_btn.setStyleSheet(
+            "QPushButton { background: #ffffff; color: #dc2626; border: 1px solid #dc2626; border-radius: 6px; padding: 6px 10px; font-weight: 600; }"
+            "QPushButton:hover { background: #fff5f5; }"
+            "QPushButton:pressed { background: #ffe4e6; }"
+        )
+        delete_btn.clicked.connect(lambda _, p=path: self._remove_uploaded_file(p))
+        h.addWidget(delete_btn)
+
         separator = QtWidgets.QFrame()
         separator.setFrameShape(QtWidgets.QFrame.HLine)
         separator.setFrameShadow(QtWidgets.QFrame.Plain)
@@ -614,30 +913,36 @@ class MainWindow(QtWidgets.QMainWindow):
             lbl.setText(text)
             lbl.setStyleSheet(f"color: {color}; font-size: 12px;")
 
+    def _show_upload_widgets(self):
+        if self.list_label_widget:
+            self.list_label_widget.show()
+        if self.file_list_container:
+            self.file_list_container.show()
+        if self.start_btn:
+            self.start_btn.show()
+
     def _on_start_clicked(self):
         if not self.uploaded_files:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst mindestens eine CSV hochladen.")
+            self._show_message("Hinweis", "Bitte zuerst mindestens eine CSV hochladen.", QtWidgets.QMessageBox.Information)
             return
-        summaries: list[str] = []
+        entries: list[tuple[str, list[tuple[str, str]]]] = []
         for p in self.uploaded_files:
             try:
                 result = self.ensemble.predict_csv(p, topk=self.topk)
-                summaries.append(f"{Path(p).name}:")
-                summaries.extend(result["summary"])  # type: ignore[arg-type]
-                summaries.append("")
+                entries.extend(self._prepare_entries(result, header=Path(p).name))
             except Exception as exc:
-                summaries.append(f"{Path(p).name}: Fehler - {exc}")
-                summaries.append("")
-        if summaries:
-            self._show_summary(summaries)
+                entries.append((Path(p).name, [(f"Fehler", str(exc))]))
+        if entries:
+            self._show_result_dialog(entries)
 
     def _on_manual_clicked(self):
         try:
             df = self._collect_manual_df()
             result = self.ensemble.predict_dataframe(df, topk=self.topk)
-            self._show_summary(result["summary"])  # type: ignore[arg-type]
+            entries = self._prepare_entries(result)
+            self._show_result_dialog(entries)
         except Exception as exc:
-            QtWidgets.QMessageBox.critical(self, "Fehler", str(exc))
+            self._show_message("Fehler", str(exc), QtWidgets.QMessageBox.Critical)
 
 
 def main():

@@ -47,9 +47,13 @@ class EnsembleInference:
         nn_meta: str = "outputs/nn/meta.json",
         svm_model: str = "outputs/svm/model.joblib",
         rf_model: str = "outputs/rf/model.joblib",
+        temperature: float = 10.0,
     ):
         self.device = get_device()
-        self.nn_model, self.nn_preproc, self.nn_features, self.class_names, self.nn_bounds, _ = load_nn_artifacts(
+        if temperature <= 0:
+            raise ValueError("temperature muss > 0 sein.")
+        self.temperature = float(temperature)
+        self.nn_model, self.nn_preproc, self.nn_features, self.class_names, self.nn_bounds = load_nn_artifacts(
             nn_model, nn_preproc, nn_meta
         )
         self.nn_model = self.nn_model.to(self.device).eval()
@@ -70,7 +74,7 @@ class EnsembleInference:
         X = _prepare_matrix(df, self.nn_features, self.nn_preproc, self.nn_bounds)
         xb = torch.tensor(X, dtype=torch.float32, device=self.device)
         with torch.no_grad():
-            logits = self.nn_model(xb)
+            logits = self.nn_model(xb) / self.temperature
             probs = torch.softmax(logits, dim=1).cpu().numpy()
         return probs
 
@@ -122,6 +126,12 @@ def main():
     ap.add_argument("--nn-meta", dest="nn_meta", default="outputs/nn/meta.json")
     ap.add_argument("--svm-model", dest="svm_model", default="outputs/svm/model.joblib")
     ap.add_argument("--rf-model", dest="rf_model", default="outputs/rf/model.joblib")
+    ap.add_argument(
+        "--temperature",
+        type=float,
+        default=10.0,
+        help="Softmax-Temperatur nur für das NN im Ensemble (T>1 weicher).",
+    )
     args = ap.parse_args()
 
     ensemble = EnsembleInference(
@@ -130,6 +140,7 @@ def main():
         nn_meta=args.nn_meta,
         svm_model=args.svm_model,
         rf_model=args.rf_model,
+        temperature=args.temperature,
     )
     result = ensemble.predict_csv(args.csv, topk=args.topk)
     print("\n".join(result["summary"]))

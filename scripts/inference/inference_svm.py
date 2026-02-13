@@ -63,23 +63,6 @@ def detect_ood(X: np.ndarray, threshold: float) -> np.ndarray:
     return np.abs(X).max(axis=1) > threshold
 
 
-def compute_distance_weights(X: np.ndarray, centers: Any, alpha: float) -> np.ndarray | None:
-    """
-    Berechnet Gewichte pro Klasse basierend auf Distanz zu Klassen-Zentren im skalierten Raum.
-    alpha steuert den Einfluss (höher = stärkere Abwertung bei Distanz).
-    """
-    if centers is None:
-        return None
-    centers_arr = np.array(centers, dtype=float)
-    if centers_arr.ndim != 2 or centers_arr.shape[1] != X.shape[1]:
-        return None
-    dists = np.linalg.norm(X[:, None, :] - centers_arr[None, :, :], axis=2)
-    weights = np.exp(-alpha * dists)
-    sums = weights.sum(axis=1, keepdims=True)
-    sums[sums == 0] = 1.0
-    return weights / sums
-
-
 def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
     print("\nGib Werte zu den Features ein (leer = NA). Erwartet numerische Eingaben.")
     values = {}
@@ -117,20 +100,14 @@ def predict_df(df_new: pd.DataFrame, artifacts: Dict[str, Any], topk: int = 3):
     feature_cols = artifacts["feature_cols"]
     class_names = artifacts["class_names"]
     ood_threshold = artifacts.get("ood_threshold", 0.0)
-    dist_mix = artifacts.get("dist_mix", 0.0)
-    dist_alpha = artifacts.get("dist_alpha", 1.0)
     X_df = ensure_columns(df_new, feature_cols)
     X_df = normalize_gender(X_df)
     X_df = apply_bounds(X_df, artifacts.get("col_bounds"))
     X = artifacts["preprocessor"].transform(X_df).astype("float32")
     ood_mask = detect_ood(X, ood_threshold)
-    dist_weights = compute_distance_weights(X, artifacts.get("class_centers"), dist_alpha) if dist_mix > 0 else None
 
     model = artifacts["model"]
     probs = model.predict_proba(X)
-    if dist_weights is not None:
-        probs = (1 - dist_mix) * probs + dist_mix * dist_weights
-        probs = probs / probs.sum(axis=1, keepdims=True)
 
     preds = probs.argmax(axis=1)
     for i, p in enumerate(preds):
@@ -154,24 +131,10 @@ def main():
         default=5.0,
         help="Maximaler |z|-Wert im standardisierten Raum bevor als OOD markiert (<=0 deaktiviert).",
     )
-    ap.add_argument(
-        "--dist-mix",
-        type=float,
-        default=0.2,
-        help="Mischungsanteil der Distanz-Gewichte (0 = aus).",
-    )
-    ap.add_argument(
-        "--dist-alpha",
-        type=float,
-        default=1.0,
-        help="Steilheit der Distanz-Gewichte (höher = stärkere Abwertung bei Distanz).",
-    )
     args = ap.parse_args()
 
     artifacts = load_svm_artifacts(args.svm_model)
     artifacts["ood_threshold"] = args.ood_threshold
-    artifacts["dist_mix"] = args.dist_mix
-    artifacts["dist_alpha"] = args.dist_alpha
     feature_cols = artifacts["feature_cols"]
 
     if args.template:

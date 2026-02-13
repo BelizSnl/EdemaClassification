@@ -2,7 +2,7 @@
 from __future__ import annotations
 import argparse, json
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 import sys
 import joblib
 import numpy as np
@@ -25,7 +25,11 @@ def get_device() -> torch.device:
     return torch.device("cpu")
 
 #lade model und preprocessor
-def load_artifacts(model_path="outputs/nn/model.pt", preproc_path="outputs/nn/preprocessor.joblib", meta_path="outputs/nn/meta.json"):
+def load_artifacts(
+    model_path="outputs/nn/model.pt",
+    preproc_path="outputs/nn/preprocessor.joblib",
+    meta_path="outputs/nn/meta.json",
+):
     ckpt = torch.load(model_path, map_location="cpu")
     meta = ckpt.get("meta", {})
     n_classes = meta.get("n_classes")
@@ -37,7 +41,6 @@ def load_artifacts(model_path="outputs/nn/model.pt", preproc_path="outputs/nn/pr
     preprocessor = pre["preprocessor"]
     feature_cols: List[str] = pre["feature_cols"]
     col_bounds = pre.get("col_bounds", {})
-    class_centers = pre.get("class_centers")
 
     model = MLPClassifier(input_dim, n_classes, hidden=tuple(hparams.get("hidden",[256,128])), p_drop=hparams.get("p_drop",0.1))
     model.load_state_dict(ckpt["state_dict"])
@@ -47,7 +50,7 @@ def load_artifacts(model_path="outputs/nn/model.pt", preproc_path="outputs/nn/pr
         with open(meta_path, "r", encoding="utf-8") as f:
             class_names = json.load(f)["class_names"]
 
-    return model, preprocessor, feature_cols, class_names, col_bounds, class_centers
+    return model, preprocessor, feature_cols, class_names, col_bounds
 
 #sicherstellen, dass alle benötigten spalten vorhanden sind
 def ensure_columns(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
@@ -89,23 +92,6 @@ def apply_bounds(df: pd.DataFrame, bounds: dict) -> pd.DataFrame:
     return df
 
 
-def compute_distance_weights(X: np.ndarray, centers: dict | list | None, alpha: float) -> np.ndarray | None:
-    """
-    Berechnet Gewichte pro Klasse basierend auf Distanz zu Klassen-Zentren im skalierten Raum.
-    alpha steuert den Einfluss (höher = stärkere Abwertung bei Distanz).
-    """
-    if centers is None:
-        return None
-    centers_arr = np.array(centers, dtype=float)
-    if centers_arr.ndim != 2 or centers_arr.shape[1] != X.shape[1]:
-        return None
-    dists = np.linalg.norm(X[:, None, :] - centers_arr[None, :, :], axis=2)
-    weights = np.exp(-alpha * dists)
-    sums = weights.sum(axis=1, keepdims=True)
-    sums[sums == 0] = 1.0
-    return weights / sums
-
-
 def detect_ood(X: np.ndarray, threshold: float) -> np.ndarray:
     """
     Markiert Zeilen als OOD, wenn der maximale |z|-Wert den Schwellwert übersteigt.
@@ -126,23 +112,19 @@ def predict_df(df_new: pd.DataFrame,
                topk: int = 3,
                col_bounds: dict | None = None,
                ood_threshold: float = 0.0,
-               dist_mix: float = 0.0,
-               dist_alpha: float = 1.0,
-               class_centers=None):
+               temperature: float = 10.0):
     device = device or get_device()
     X_df = ensure_columns(df_new, feature_cols)
     X_df = normalize_gender(X_df)
     X_df = apply_bounds(X_df, col_bounds or {})
     X = preprocessor.transform(X_df).astype("float32")
     ood_mask = detect_ood(X, ood_threshold)
-    dist_weights = compute_distance_weights(X, class_centers, dist_alpha) if dist_mix > 0 else None
     xb = torch.tensor(X, dtype=torch.float32, device=device)
     model = model.to(device).eval()
-    logits = model(xb)
+    if temperature <= 0:
+        raise ValueError("temperature muss > 0 sein.")
+    logits = model(xb) / float(temperature)
     probs = torch.softmax(logits, dim=1).cpu().numpy()
-    if dist_weights is not None:
-        probs = (1 - dist_mix) * probs + dist_mix * dist_weights
-        probs = probs / probs.sum(axis=1, keepdims=True)
     preds = probs.argmax(axis=1)
     for i, p in enumerate(preds):
         top_idx = probs[i].argsort()[::-1][:topk]
@@ -193,20 +175,16 @@ def main():
         help="Maximaler |z|-Wert im standardisierten Raum bevor als OOD markiert (<=0 deaktiviert).",
     )
     ap.add_argument(
-        "--dist-mix",
+        "--temperature",
         type=float,
-        default=0.2,
-        help="Mischungsanteil der Distanz-Gewichte (0 = aus).",
-    )
-    ap.add_argument(
-        "--dist-alpha",
-        type=float,
-        default=1.0,
-        help="Steilheit der Distanz-Gewichte (höher = stärkere Abwertung bei Distanz).",
+        default=10.0,
+        help="Softmax-Temperatur (T>1 weicher, T<1 schärfer).",
     )
     args = ap.parse_args()
 
-    model, preprocessor, feature_cols, class_names, col_bounds, class_centers = load_artifacts(args.model, args.preproc, args.meta)
+    model, preprocessor, feature_cols, class_names, col_bounds = load_artifacts(
+        args.model, args.preproc, args.meta
+    )
 
     if args.template:
         write_template_csv(Path(args.template), feature_cols)
@@ -229,10 +207,8 @@ def main():
         device=get_device(),
         topk=args.topk,
         col_bounds=col_bounds,
-        dist_mix=args.dist_mix,
-        dist_alpha=args.dist_alpha,
-        class_centers=class_centers,
         ood_threshold=args.ood_threshold,
+        temperature=args.temperature,
     )
 
 if __name__ == "__main__":

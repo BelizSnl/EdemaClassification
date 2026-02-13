@@ -6,3 +6,5 @@ torchvision
 torchaudio
 joblib
 PyQt5
+matplotlib
+plotly

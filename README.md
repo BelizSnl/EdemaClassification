@@ -1,50 +1,124 @@
 # LymphDot
 
+**What does this project do?**  
+LymphDot classifies edema types and stages from tabular patient data (CSV). It trains three models (MLP‑NN, SVM, Random Forest) and provides an inference pipeline with a soft‑voting ensemble plus a GUI for single or batch predictions.
 
-
-# Lymphdoc – Training & Inference
-
-## Struktur
+**Training**  
+Install once:
+```bash
+pip install -r requirements.txt
 ```
-LymphdotProject/
+
+For the best inference quality, train all three models (NN, SVM, RF). You can also train just one model and run inference only with that model’s script.
+
+```bash
+python scripts/train/train_nn.py --data Lymphdoc_medi_4k.csv --target Klassifizierung
+python scripts/train/train_svm.py --data Lymphdoc_medi_4k.csv --target Klassifizierung
+python scripts/train/train_rf.py --data Lymphdoc_medi_4k.csv --target Klassifizierung
+```
+
+Outputs & artifacts are written to `outputs/`:
+- `outputs/nn/`: NN model, preprocessor, plots
+- `outputs/svm/`: SVM model, plots
+- `outputs/rf/`: RF model, plots
+
+**Inference**
+GUI (recommended for quick use):
+```bash
+python gui/gui.py
+```
+
+Ensemble inference without GUI (NN + SVM + RF, soft‑voting):
+```bash
+python scripts/inference/inference_main.py --csv "PATH/to/file.csv"
+```
+
+Single‑model inference (CSV only):
+```bash
+python scripts/inference/inference_nn.py --csv "PATH/to/file.csv"
+python scripts/inference/inference_svm.py --csv "PATH/to/file.csv"
+python scripts/inference/inference_rf.py --csv "PATH/to/file.csv"
+```
+
+Interactive (terminal input, NN only):
+```bash
+python scripts/inference/inference_nn.py --interactive
+python scripts/inference/inference_nn.py --template new.csv
+```
+
+**Project Structure**
+```
+.
+├─ gui/
+│  └─ gui.py
+├─ scripts/
+│  ├─ inference/
+│  │  ├─ inference_nn.py
+│  │  ├─ inference_svm.py
+│  │  ├─ inference_rf.py
+│  │  └─ inference_main.py
+│  └─ train/
+│     ├─ train_nn.py
+│     ├─ train_svm.py
+│     └─ train_rf.py
 ├─ modules/
-│  ├─ __init__.py
-│  ├─ data_prepare.py          # Laden, Split, Label-Encode, Skalierung
-│  ├─ utils.py                 # Device/Seed/Dataloader
-│  └─ models/
-│     ├─ __init__.py
-│     └─ mlp.py                # MLPClassifier
-├─ train.py                    # Training + Artefakte speichern
-├─ inference.py                # Inferenz (CSV oder interaktiv)
-├─ outputs/                    # Artefakte (werden erzeugt)
+│  ├─ nn/        # MLP, Utils
+│  ├─ prep/      # Loading, Split, Preprocessing
+│  └─ vis/       # Plots
+├─ outputs/      # Generated models/plots
+├─ Lymphdoc_medi_4k.csv
 └─ requirements.txt
 ```
 
-## Training
-```bash
-conda activate Lymphoma_Classification_Apple
-python train.py --data Lymphdoc_medi_4k.csv --target Klassifizierung --epochs 30
+**Required Measurements (CSV Columns)**
+For custom CSV files, use the following feature columns.  
+Training CSVs must also include the target column `Klassifizierung`. Inference CSVs use only the feature columns below.
+
+```text
+Geschlecht (Gender)
+Alter (Age)
+Größe (Height)
+Gewicht (Weight)
+Arm links cC (Left arm cC)
+Arm links cC1 (Left arm cC1)
+Arm links cD (Left arm cD)
+Arm links cE (Left arm cE)
+Arm links cF (Left arm cF)
+Arm links cG (Left arm cG)
+Arm rechts cC (Right arm cC)
+Arm rechts cC1 (Right arm cC1)
+Arm rechts cD (Right arm cD)
+Arm rechts cE (Right arm cE)
+Arm rechts cF (Right arm cF)
+Arm rechts cG (Right arm cG)
+Ueber Brust (Above chest)
+Unter Brust (Under chest)
+Tallie cT (Waist cT)
+Hüfte cH (Hip cH)
+Bein links cB1 (Left leg cB1)
+Bein links cC (Left leg cC)
+Bein links cD (Left leg cD)
+Bein links cE (Left leg cE)
+Bein links cF (Left leg cF)
+Bein links cG (Left leg cG)
+Bein rechts cB1 (Right leg cB1)
+Bein rechts cC (Right leg cC)
+Bein rechts cD (Right leg cD)
+Bein rechts cE (Right leg cE)
+Bein rechts cF (Right leg cF)
+Bein rechts cG (Right leg cG)
+Druck_links (Pressure left)
+Schwere/Trägheit_links (Heaviness/lethargy left)
+Taubheit_links (Numbness left)
+Schmerz_links (Pain left)
+Erwärmung_links (Warmth left)
+Druck_rechts (Pressure right)
+Schwere/Trägheit_rechts (Heaviness/lethargy right)
+Taubheit_rechts (Numbness right)
+Schmerz_rechts (Pain right)
+Erwärmung_rechts (Warmth right)
 ```
 
-Artefakte landen in `outputs/`:
-- `model.pt` – Weights + Meta (Architektur-HP, Input-Dim, Klassen)
-- `preprocessor.joblib` – Skaler + Imputer + Spaltenliste
-- `meta.json` – Klassenliste (Fallback)
-
-## Inferenz
-- Interaktiv:
-  ```bash
-  python inference.py --interactive
-  ```
-- Batch-CSV:
-  ```bash
-  python inference.py --template new.csv
-  # new.csv ausfüllen, dann
-  python inference.py --csv new.csv
-  ```
-
-## GUI (PyQt5) mit Soft-Voting
-- Start: `python gui/gui.py`
-- Wählt per Button eine CSV (gleiche Spalten wie im Training) oder gibt alle Features manuell ein.
-- Im Hintergrund holt `scripts/inference/inference_main.py` die Wahrscheinlichkeiten von NN, SVM und RF und mittelt sie per Soft-Voting.
-- Die aggregierte Verteilung pro Zeile wird als Popup angezeigt (Top-Klassen mit Wahrscheinlichkeiten).
+Measurement reference images:
+![Medi arm](gui/Medi_arm.png)
+![Medi leg](gui/Medi_bein.png)

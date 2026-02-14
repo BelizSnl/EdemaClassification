@@ -53,9 +53,13 @@ class EnsembleInference:
         if temperature <= 0:
             raise ValueError("temperature muss > 0 sein.")
         self.temperature = float(temperature)
-        self.nn_model, self.nn_preproc, self.nn_features, self.class_names, self.nn_bounds = load_nn_artifacts(
-            nn_model, nn_preproc, nn_meta
-        )
+        (
+            self.nn_model,
+            self.nn_preproc,
+            self.nn_features,
+            self.class_names,
+            self.nn_bounds,
+        ) = load_nn_artifacts(nn_model, nn_preproc, nn_meta)
         self.nn_model = self.nn_model.to(self.device).eval()
 
         self.svm_artifacts = load_svm_artifacts(svm_model)
@@ -80,13 +84,17 @@ class EnsembleInference:
 
     def _predict_svm(self, df: pd.DataFrame) -> np.ndarray:
         art = self.svm_artifacts
-        X = _prepare_matrix(df, art["feature_cols"], art["preprocessor"], art.get("col_bounds"))
+        X = _prepare_matrix(
+            df, art["feature_cols"], art["preprocessor"], art.get("col_bounds")
+        )
         probs = art["model"].predict_proba(X)
         return probs
 
     def _predict_rf(self, df: pd.DataFrame) -> np.ndarray:
         art = self.rf_artifacts
-        X = _prepare_matrix(df, art["feature_cols"], art["preprocessor"], art.get("col_bounds"))
+        X = _prepare_matrix(
+            df, art["feature_cols"], art["preprocessor"], art.get("col_bounds")
+        )
         probs = art["model"].predict_proba(X)
         return probs
 
@@ -101,9 +109,14 @@ class EnsembleInference:
 
         def _top_lines(idx: int) -> str:
             order = probs_avg[idx].argsort()[::-1][:topk]
-            return ", ".join([f"{self.class_names[i]}={probs_avg[idx][i]:.3f}" for i in order])
+            return ", ".join(
+                [f"{self.class_names[i]}={probs_avg[idx][i]:.3f}" for i in order]
+            )
 
-        summary = [f"[{i}] pred={self.class_names[preds[i]]} | top{topk}: {_top_lines(i)}" for i in range(len(df))]
+        summary = [
+            f"[{i}] pred={self.class_names[preds[i]]} | top{topk}: {_top_lines(i)}"
+            for i in range(len(df))
+        ]
         return {
             "class_names": self.class_names,
             "avg_probs": probs_avg,
@@ -122,7 +135,9 @@ def main():
     ap.add_argument("--csv", required=True, help="CSV mit neuen Fällen.")
     ap.add_argument("--topk", type=int, default=3)
     ap.add_argument("--nn-model", dest="nn_model", default="outputs/nn/model.pt")
-    ap.add_argument("--nn-preproc", dest="nn_preproc", default="outputs/nn/preprocessor.joblib")
+    ap.add_argument(
+        "--nn-preproc", dest="nn_preproc", default="outputs/nn/preprocessor.joblib"
+    )
     ap.add_argument("--nn-meta", dest="nn_meta", default="outputs/nn/meta.json")
     ap.add_argument("--svm-model", dest="svm_model", default="outputs/svm/model.joblib")
     ap.add_argument("--rf-model", dest="rf_model", default="outputs/rf/model.joblib")

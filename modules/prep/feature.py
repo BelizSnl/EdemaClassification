@@ -31,9 +31,13 @@ def ensure_feature(config_path: str | Path, feature_cols: Iterable[str]) -> List
             with open(path, "r", encoding="utf-8") as fh:
                 data = json.load(fh)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Feature-Flag-Datei '{path}' ist kein gültiges JSON ({exc}).") from exc
+            raise ValueError(
+                f"Feature-Flag-Datei '{path}' ist kein gültiges JSON ({exc})."
+            ) from exc
         if not isinstance(data, dict):
-            raise ValueError(f"Feature-Flag-Datei '{path}' muss ein Objekt aus Spaltennamen -> bool sein.")
+            raise ValueError(
+                f"Feature-Flag-Datei '{path}' muss ein Objekt aus Spaltennamen -> bool sein."
+            )
         toggles = {str(k): _normalize_flag(v) for k, v in data.items()}
 
     selected_cols: List[str] = []
@@ -64,10 +68,14 @@ def ensure_feature(config_path: str | Path, feature_cols: Iterable[str]) -> List
             print(f"Feature-Flag-Datei erstellt: {path}")
 
     if extra_toggles:
-        print(f"Warnung: {len(extra_toggles)} Spalten im Toggle-File nicht in den Daten gefunden: {extra_toggles}")
+        print(
+            f"Warnung: {len(extra_toggles)} Spalten im Toggle-File nicht in den Daten gefunden: {extra_toggles}"
+        )
 
     if not selected_cols:
-        raise ValueError(f"In '{path}' sind alle Spalten deaktiviert – es muss mindestens eine aktiv sein.")
+        raise ValueError(
+            f"In '{path}' sind alle Spalten deaktiviert – es muss mindestens eine aktiv sein."
+        )
 
     return selected_cols
 

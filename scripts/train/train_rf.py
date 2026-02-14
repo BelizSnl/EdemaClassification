@@ -131,17 +131,26 @@ def train_random_forest(
         y_true=enc.y_test,
         y_pred=preds_test,
         class_names=class_names,
-        out_path=plot_3d_path.parent / f"{plot_3d_path.stem}_correctness{plot_3d_path.suffix}",
+        out_path=plot_3d_path.parent
+        / f"{plot_3d_path.stem}_correctness{plot_3d_path.suffix}",
     )
 
-    print(f"[RF] Test-Accuracy: {acc:.4f} | Train-LogLoss={ll_train:.4f} Test-LogLoss={ll_test:.4f}")
+    print(
+        f"[RF] Test-Accuracy: {acc:.4f} | Train-LogLoss={ll_train:.4f} Test-LogLoss={ll_test:.4f}"
+    )
     print(
         f"[RF] Macro: P={prec_macro:.4f} R={rec_macro:.4f} F1={f1_macro:.4f} | "
         f"Weighted: P={prec_weighted:.4f} R={rec_weighted:.4f} F1={f1_weighted:.4f}"
     )
-    print(classification_report(enc.y_test, preds_test, target_names=class_names, digits=4))
+    print(
+        classification_report(
+            enc.y_test, preds_test, target_names=class_names, digits=4
+        )
+    )
     print("Confusion matrix:\n", confusion_matrix(enc.y_test, preds_test))
-    plot_confusion_matrix(enc.y_test, preds_test, class_names=class_names, out_path=cm_path)
+    plot_confusion_matrix(
+        enc.y_test, preds_test, class_names=class_names, out_path=cm_path
+    )
 
     model_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path.parent.mkdir(parents=True, exist_ok=True)
@@ -172,19 +181,44 @@ def main():
     )
 
     ap.add_argument("--rf-n-estimators", dest="rf_n_estimators", type=int, default=300)
-    ap.add_argument("--rf-max-depth", dest="rf_max_depth", type=int, default=0, help="0 oder <=0 bedeutet None")
-    ap.add_argument("--rf-min-samples-leaf", dest="rf_min_samples_leaf", type=int, default=1)
+    ap.add_argument(
+        "--rf-max-depth",
+        dest="rf_max_depth",
+        type=int,
+        default=0,
+        help="0 oder <=0 bedeutet None",
+    )
+    ap.add_argument(
+        "--rf-min-samples-leaf", dest="rf_min_samples_leaf", type=int, default=1
+    )
     ap.add_argument("--rf-n-jobs", dest="rf_n_jobs", type=int, default=-1)
-    ap.add_argument("--rf-model", dest="rf_model", type=str, default="outputs/rf/model.joblib")
-    ap.add_argument("--rf-meta", dest="rf_meta", type=str, default="outputs/rf/meta.json")
-    ap.add_argument("--rf-plot", dest="rf_plot", type=str, default="outputs/rf/pca_regions.png")
-    ap.add_argument("--rf-plot-3d", dest="rf_plot_3d", type=str, default="outputs/rf/pca_3d.html")
-    ap.add_argument("--rf-loss-plot", dest="rf_loss_plot", type=str, default="outputs/rf/loss.png")
-    ap.add_argument("--rf-cm-plot", dest="rf_cm_plot", type=str, default="outputs/rf/confusion_matrix.png")
+    ap.add_argument(
+        "--rf-model", dest="rf_model", type=str, default="outputs/rf/model.joblib"
+    )
+    ap.add_argument(
+        "--rf-meta", dest="rf_meta", type=str, default="outputs/rf/meta.json"
+    )
+    ap.add_argument(
+        "--rf-plot", dest="rf_plot", type=str, default="outputs/rf/pca_regions.png"
+    )
+    ap.add_argument(
+        "--rf-plot-3d", dest="rf_plot_3d", type=str, default="outputs/rf/pca_3d.html"
+    )
+    ap.add_argument(
+        "--rf-loss-plot", dest="rf_loss_plot", type=str, default="outputs/rf/loss.png"
+    )
+    ap.add_argument(
+        "--rf-cm-plot",
+        dest="rf_cm_plot",
+        type=str,
+        default="outputs/rf/confusion_matrix.png",
+    )
     args = ap.parse_args()
 
     set_seed(args.seed)
-    feature_cols, enc, prep = prepare_data(args.data, args.target, args.feature, args.test_size, args.seed)
+    feature_cols, enc, prep = prepare_data(
+        args.data, args.target, args.feature, args.test_size, args.seed
+    )
     class_names = enc.class_names
 
     train_random_forest(

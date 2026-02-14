@@ -16,7 +16,9 @@ def _ensure_out_dir(path: str | Path) -> Path:
     return out_path
 
 
-def plot_loss_curve(train_loss: List[float], test_loss: List[float], out_path: str, ylabel: str = "Loss"):
+def plot_loss_curve(
+    train_loss: List[float], test_loss: List[float], out_path: str, ylabel: str = "Loss"
+):
     """Zeigt Train/Test-Loss über Epochen. Funktioniert auch mit nur einem Punkt (z.B. SVM/RF)."""
     out = _ensure_out_dir(out_path)
     epochs = list(range(1, len(train_loss) + 1))
@@ -68,14 +70,38 @@ def plot_pca_decision_regions(
     # Plot
     fig, ax = plt.subplots(figsize=(6, 5))
     bg_cmap = ListedColormap(plt.get_cmap(cmap_background).colors[: len(class_names)])
-    cs = ax.contourf(xx, yy, preds_grid, alpha=0.4, cmap=bg_cmap, levels=np.arange(len(class_names) + 1) - 0.5)
-    scatter = ax.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=y_test, cmap=cmap_points, edgecolor="k", s=35, alpha=0.9)
+    cs = ax.contourf(
+        xx,
+        yy,
+        preds_grid,
+        alpha=0.4,
+        cmap=bg_cmap,
+        levels=np.arange(len(class_names) + 1) - 0.5,
+    )
+    scatter = ax.scatter(
+        X_test_pca[:, 0],
+        X_test_pca[:, 1],
+        c=y_test,
+        cmap=cmap_points,
+        edgecolor="k",
+        s=35,
+        alpha=0.9,
+    )
     ax.set_xlabel("PC1")
     ax.set_ylabel("PC2")
     ax.set_title("PCA + Decision Regions (Test)")
-    legend1 = ax.legend(*scatter.legend_elements(), title="Klasse", loc="best", fontsize="small")
+    legend1 = ax.legend(
+        *scatter.legend_elements(), title="Klasse", loc="best", fontsize="small"
+    )
     ax.add_artist(legend1)
-    fig.colorbar(cs, ax=ax, fraction=0.046, pad=0.04, ticks=range(len(class_names)), label="Region")
+    fig.colorbar(
+        cs,
+        ax=ax,
+        fraction=0.046,
+        pad=0.04,
+        ticks=range(len(class_names)),
+        label="Region",
+    )
     fig.tight_layout()
     fig.savefig(out, dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -98,7 +124,9 @@ def plot_pca_3d_scatter(
         import plotly.graph_objects as go
         from plotly.offline import plot as plotly_plot
     except ImportError as exc:
-        raise RuntimeError("Plotly ist nicht installiert (pip install plotly).") from exc
+        raise RuntimeError(
+            "Plotly ist nicht installiert (pip install plotly)."
+        ) from exc
 
     out = _ensure_out_dir(out_path)
     pca = PCA(n_components=3, random_state=random_state)
@@ -119,7 +147,9 @@ def plot_pca_3d_scatter(
                     opacity=0.85,
                     line=dict(width=0.5, color="black"),
                 ),
-                text=[class_names[l] if l < len(class_names) else str(l) for l in labels],
+                text=[
+                    class_names[l] if l < len(class_names) else str(l) for l in labels
+                ],
             )
         ]
     )
@@ -153,14 +183,16 @@ def plot_pca_3d_correctness(
         import plotly.graph_objects as go
         from plotly.offline import plot as plotly_plot
     except ImportError as exc:
-        raise RuntimeError("Plotly ist nicht installiert (pip install plotly).") from exc
+        raise RuntimeError(
+            "Plotly ist nicht installiert (pip install plotly)."
+        ) from exc
 
     out = _ensure_out_dir(out_path)
     pca = PCA(n_components=3, random_state=random_state)
     pca.fit(X_train)
     coords = pca.transform(X_test)
 
-    correct = (y_true == y_pred)
+    correct = y_true == y_pred
     traces = []
     for mask, name, color in (
         (correct, "Correct", "green"),

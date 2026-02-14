@@ -92,7 +92,9 @@ def load_svm_artifacts(model_path: str) -> Dict[str, Any]:
     data = joblib.load(model_path)
     required = {"model", "preprocessor", "feature_cols", "class_names"}
     if not required.issubset(data.keys()):
-        raise ValueError(f"SVM-Artefakt unvollständig, erwartet Schlüssel: {sorted(required)}")
+        raise ValueError(
+            f"SVM-Artefakt unvollständig, erwartet Schlüssel: {sorted(required)}"
+        )
     return data
 
 
@@ -121,10 +123,14 @@ def predict_df(df_new: pd.DataFrame, artifacts: Dict[str, Any], topk: int = 3):
 def main():
     ap = argparse.ArgumentParser(description="Inferenz für SVM-Baseline")
     ap.add_argument("--csv", type=str, help="CSV mit neuen Fällen.")
-    ap.add_argument("--interactive", action="store_true", help="Interaktive Eingabe im Terminal.")
+    ap.add_argument(
+        "--interactive", action="store_true", help="Interaktive Eingabe im Terminal."
+    )
     ap.add_argument("--template", type=str, help="Erzeuge Template-CSV für Eingaben.")
     ap.add_argument("--topk", type=int, default=3)
-    ap.add_argument("--svm-model", dest="svm_model", type=str, default="outputs/svm/model.joblib")
+    ap.add_argument(
+        "--svm-model", dest="svm_model", type=str, default="outputs/svm/model.joblib"
+    )
     ap.add_argument(
         "--ood-threshold",
         type=float,

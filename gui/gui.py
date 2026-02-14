@@ -18,6 +18,7 @@ from scripts.inference.inference_main import EnsembleInference  # type: ignore
 LOGO_PATH = ROOT / "gui" / "Logo_grau.png"
 logo_url = LOGO_PATH.as_posix()
 
+
 class DropFrame(QtWidgets.QFrame):
     fileDropped = QtCore.pyqtSignal(str)
 
@@ -102,6 +103,7 @@ class CircularProgress(QtWidgets.QWidget):
         font = QtGui.QFont("Segoe UI", 20)
         painter.setFont(font)
         painter.drawText(self.rect(), QtCore.Qt.AlignCenter, f"{self._value:.0f}%")
+
 
 STYLESHEET = """
 QMainWindow {
@@ -254,7 +256,9 @@ class MainWindow(QtWidgets.QMainWindow):
         bar_layout.setContentsMargins(24, 20, 24, 20)
 
         bar_layout.addStretch(2)
-        title = QtWidgets.QLabel("Stadieneinteilung von Lipödem, Lymphödem und Lipo-Lymphödem")
+        title = QtWidgets.QLabel(
+            "Stadieneinteilung von Lipödem, Lymphödem und Lipo-Lymphödem"
+        )
         title.setStyleSheet("font-size: 30px; font-weight: 400; color: #ffffff;")
         bar_layout.addWidget(title, alignment=QtCore.Qt.AlignCenter)
         bar_layout.addStretch(1)
@@ -262,7 +266,9 @@ class MainWindow(QtWidgets.QMainWindow):
         hsd_logo_path = ROOT / "gui" / "HSDLOGO.png"
         if hsd_logo_path.exists():
             logo_lbl = QtWidgets.QLabel()
-            pix = QtGui.QPixmap(str(hsd_logo_path)).scaled(192, 192, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+            pix = QtGui.QPixmap(str(hsd_logo_path)).scaled(
+                192, 192, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation
+            )
             logo_lbl.setPixmap(pix)
             logo_lbl.setStyleSheet("background: transparent;")
             logo_lbl.setAttribute(QtCore.Qt.WA_TranslucentBackground)
@@ -282,12 +288,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def _build_upload_section(self) -> QtWidgets.QWidget:
         frame = QtWidgets.QFrame()
         frame.setObjectName("uploadFrame")
-        frame.setStyleSheet("#uploadFrame { border: 1px solid #d7dce5; border-radius: 8px; background: transparent; }")
+        frame.setStyleSheet(
+            "#uploadFrame { border: 1px solid #d7dce5; border-radius: 8px; background: transparent; }"
+        )
         main_layout = QtWidgets.QVBoxLayout(frame)
         main_layout.setContentsMargins(12, 12, 12, 12)
         main_layout.setSpacing(10)
         title_upload = QtWidgets.QLabel("CSV Eingabe")
-        title_upload.setStyleSheet("font-size: 22px; font-weight: 700; padding: 6px 0; color: #111827;")
+        title_upload.setStyleSheet(
+            "font-size: 22px; font-weight: 700; padding: 6px 0; color: #111827;"
+        )
         main_layout.addWidget(title_upload, alignment=QtCore.Qt.AlignLeft)
 
         layout = QtWidgets.QHBoxLayout()
@@ -306,7 +316,7 @@ class MainWindow(QtWidgets.QMainWindow):
             "  background: #f7f9fc;"
             "  border-radius: 16px;"
             "}"
-            "#dropCard[dragging=\"true\"] {"
+            '#dropCard[dragging="true"] {'
             "  background: #e1eafe;"
             "}"
             "QLabel { border: none; }"
@@ -323,7 +333,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         icon_label = QtWidgets.QLabel()
         icon_path = ROOT / "gui" / "Upload.png"
-        pixmap = QtGui.QPixmap(str(icon_path)).scaled(120, 120, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        pixmap = QtGui.QPixmap(str(icon_path)).scaled(
+            120, 120, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation
+        )
         icon_label.setPixmap(pixmap)
         icon_label.setAlignment(QtCore.Qt.AlignCenter)
         card_layout.addWidget(icon_label)
@@ -355,7 +367,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Overlay für Fake-Upload
         overlay = QtWidgets.QFrame(drop_card)
-        overlay.setStyleSheet("QFrame { background: rgba(255,255,255,0.9); border-radius: 16px; }")
+        overlay.setStyleSheet(
+            "QFrame { background: rgba(255,255,255,0.9); border-radius: 16px; }"
+        )
         overlay.hide()
         overlay_layout = QtWidgets.QVBoxLayout(overlay)
         overlay_layout.setAlignment(QtCore.Qt.AlignCenter)
@@ -396,10 +410,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.list_label_widget = list_label
 
         file_icon_path = ROOT / "gui" / "file.png"
-        self.file_icon = QtGui.QPixmap(str(file_icon_path)).scaled(20, 20, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        self.file_icon = QtGui.QPixmap(str(file_icon_path)).scaled(
+            20, 20, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation
+        )
 
         list_container = QtWidgets.QFrame()
-        list_container.setStyleSheet("QFrame { border: 1px solid #f5f9fe; border-radius: 8px; background: transparent; }")
+        list_container.setStyleSheet(
+            "QFrame { border: 1px solid #f5f9fe; border-radius: 8px; background: transparent; }"
+        )
         list_container.setFixedSize(420, 320)
         list_layout = QtWidgets.QVBoxLayout(list_container)
         list_layout.setContentsMargins(8, 8, 8, 8)
@@ -456,7 +474,9 @@ class MainWindow(QtWidgets.QMainWindow):
         line_right.setFixedHeight(1)
         line_right.setStyleSheet("QFrame { background-color: #d7dce5; border: none; }")
         or_label = QtWidgets.QLabel("ODER")
-        or_label.setStyleSheet("font-size: 22px; font-weight: 700; color: #111827; padding: 6px 0;")
+        or_label.setStyleSheet(
+            "font-size: 22px; font-weight: 700; color: #111827; padding: 6px 0;"
+        )
         or_layout.addWidget(line_left, 1)
         or_layout.addWidget(or_label)
         or_layout.addWidget(line_right, 1)
@@ -464,7 +484,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         form_frame = QtWidgets.QFrame()
         form_frame.setObjectName("formFrame")
-        form_frame.setStyleSheet("#formFrame { border: 1px solid #d7dce5; border-radius: 8px; background: transparent; }")
+        form_frame.setStyleSheet(
+            "#formFrame { border: 1px solid #d7dce5; border-radius: 8px; background: transparent; }"
+        )
         form_layout = QtWidgets.QVBoxLayout(form_frame)
         form_layout.setContentsMargins(12, 12, 12, 12)
         form_layout.setSpacing(18)
@@ -572,7 +594,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 continue
             lbl = QtWidgets.QLabel()
             lbl.setAlignment(QtCore.Qt.AlignCenter)
-            lbl.setPixmap(pix.scaled(320, 260, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+            lbl.setPixmap(
+                pix.scaled(
+                    320, 260, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation
+                )
+            )
             lbl.setStyleSheet(
                 "QLabel {"
                 " background: #ffffff;"
@@ -660,7 +686,9 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         box.exec_()
 
-    def _prepare_entries(self, result: Dict[str, object], header: str | None = None) -> list[tuple[str, list[tuple[str, str]]]]:
+    def _prepare_entries(
+        self, result: Dict[str, object], header: str | None = None
+    ) -> list[tuple[str, list[tuple[str, str]]]]:
         class_names = result.get("class_names")
         probs = result.get("avg_probs")
         preds = result.get("preds")
@@ -683,7 +711,9 @@ class MainWindow(QtWidgets.QMainWindow):
             entries.append((title, lines))
         return entries
 
-    def _build_result_card(self, title: str, rows: list[tuple[str, str]]) -> QtWidgets.QFrame:
+    def _build_result_card(
+        self, title: str, rows: list[tuple[str, str]]
+    ) -> QtWidgets.QFrame:
         card = QtWidgets.QFrame()
         card.setStyleSheet(
             "QFrame { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; }"
@@ -707,7 +737,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         header = QtWidgets.QLabel(title)
         header.setFrameStyle(QtWidgets.QFrame.NoFrame)
-        header.setStyleSheet("font-size: 17px; font-weight: 700; color: #111827; border: none; background: transparent;")
+        header.setStyleSheet(
+            "font-size: 17px; font-weight: 700; color: #111827; border: none; background: transparent;"
+        )
         lay.addWidget(header)
 
         line = QtWidgets.QFrame()
@@ -722,10 +754,14 @@ class MainWindow(QtWidgets.QMainWindow):
             row.setSpacing(8)
             lbl = QtWidgets.QLabel(label)
             lbl.setFrameStyle(QtWidgets.QFrame.NoFrame)
-            lbl.setStyleSheet("color: #6b7280; font-size: 13px; background: transparent; border: none; padding: 0;")
+            lbl.setStyleSheet(
+                "color: #6b7280; font-size: 13px; background: transparent; border: none; padding: 0;"
+            )
             val = QtWidgets.QLabel(value)
             val.setFrameStyle(QtWidgets.QFrame.NoFrame)
-            val.setStyleSheet("color: #111827; font-weight: 700; font-size: 15px; background: transparent; border: none; padding: 0;")
+            val.setStyleSheet(
+                "color: #111827; font-weight: 700; font-size: 15px; background: transparent; border: none; padding: 0;"
+            )
             row.addWidget(lbl)
             row.addStretch()
             row.addWidget(val, 0, QtCore.Qt.AlignRight)
@@ -733,7 +769,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return card
 
-    def _show_result_dialog(self, entries: list[tuple[str, list[tuple[str, str]]]]) -> None:
+    def _show_result_dialog(
+        self, entries: list[tuple[str, list[tuple[str, str]]]]
+    ) -> None:
         dialog = QtWidgets.QDialog(self)
         dialog.setWindowTitle("Vorhersage")
         dialog.setModal(True)
@@ -780,7 +818,9 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.exec_()
 
     def _on_csv_clicked(self):
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "CSV auswählen", "", "CSV Dateien (*.csv)")
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "CSV auswählen", "", "CSV Dateien (*.csv)"
+        )
         if not path:
             return
         self._predict_csv_path(path)
@@ -802,7 +842,9 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         val = self.progress_circle.value() + self.loading_step
         if self.pending_path:
-            self._set_status(self.pending_path, f"Uploading ({int(min(val,100))}%)", "#2563eb")
+            self._set_status(
+                self.pending_path, f"Uploading ({int(min(val,100))}%)", "#2563eb"
+            )
         if val >= 100:
             self.progress_circle.setValue(100)
             self.loading_timer.stop()
@@ -869,7 +911,9 @@ class MainWindow(QtWidgets.QMainWindow):
         texts = QtWidgets.QVBoxLayout()
         name_lbl = QtWidgets.QLabel(name)
         name_lbl.setStyleSheet("font-size: 13px; font-weight: 600; color: #111827;")
-        name_lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        name_lbl.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
+        )
         status_lbl = QtWidgets.QLabel("Uploading (0%)")
         status_lbl.setStyleSheet("color: #2563eb; font-size: 12px;")
         texts.addWidget(name_lbl)
@@ -923,7 +967,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _on_start_clicked(self):
         if not self.uploaded_files:
-            self._show_message("Hinweis", "Bitte zuerst mindestens eine CSV hochladen.", QtWidgets.QMessageBox.Information)
+            self._show_message(
+                "Hinweis",
+                "Bitte zuerst mindestens eine CSV hochladen.",
+                QtWidgets.QMessageBox.Information,
+            )
             return
         entries: list[tuple[str, list[tuple[str, str]]]] = []
         for p in self.uploaded_files:

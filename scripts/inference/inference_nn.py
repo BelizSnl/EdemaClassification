@@ -1,4 +1,4 @@
-#Imports
+# Imports
 from __future__ import annotations
 import argparse, json
 from pathlib import Path
@@ -16,7 +16,8 @@ if str(ROOT) not in sys.path:
 
 from modules.nn.mlp import MLPClassifier
 
-#gerät bestimmen
+
+# gerät bestimmen
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device("cuda")
@@ -24,7 +25,8 @@ def get_device() -> torch.device:
         return torch.device("mps")
     return torch.device("cpu")
 
-#lade model und preprocessor
+
+# lade model und preprocessor
 def load_artifacts(
     model_path="outputs/nn/model.pt",
     preproc_path="outputs/nn/preprocessor.joblib",
@@ -33,16 +35,21 @@ def load_artifacts(
     ckpt = torch.load(model_path, map_location="cpu")
     meta = ckpt.get("meta", {})
     n_classes = meta.get("n_classes")
-    input_dim  = meta.get("input_dim")
+    input_dim = meta.get("input_dim")
     class_names = meta.get("class_names")
-    hparams = meta.get("hparams", {"hidden":[256,128], "p_drop":0.1})
+    hparams = meta.get("hparams", {"hidden": [256, 128], "p_drop": 0.1})
 
     pre = joblib.load(preproc_path)
     preprocessor = pre["preprocessor"]
     feature_cols: List[str] = pre["feature_cols"]
     col_bounds = pre.get("col_bounds", {})
 
-    model = MLPClassifier(input_dim, n_classes, hidden=tuple(hparams.get("hidden",[256,128])), p_drop=hparams.get("p_drop",0.1))
+    model = MLPClassifier(
+        input_dim,
+        n_classes,
+        hidden=tuple(hparams.get("hidden", [256, 128])),
+        p_drop=hparams.get("p_drop", 0.1),
+    )
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 
@@ -52,7 +59,8 @@ def load_artifacts(
 
     return model, preprocessor, feature_cols, class_names, col_bounds
 
-#sicherstellen, dass alle benötigten spalten vorhanden sind
+
+# sicherstellen, dass alle benötigten spalten vorhanden sind
 def ensure_columns(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
     missing = [c for c in feature_cols if c not in df.columns]
     for c in missing:
@@ -101,18 +109,21 @@ def detect_ood(X: np.ndarray, threshold: float) -> np.ndarray:
         return np.zeros(X.shape[0], dtype=bool)
     return np.abs(X).max(axis=1) > threshold
 
-#vorhersagen für neue daten
+
+# vorhersagen für neue daten
 @torch.no_grad()
-def predict_df(df_new: pd.DataFrame,
-               model: nn.Module,
-               preprocessor,
-               feature_cols: List[str],
-               class_names: List[str],
-               device: torch.device | None = None,
-               topk: int = 3,
-               col_bounds: dict | None = None,
-               ood_threshold: float = 0.0,
-               temperature: float = 10.0):
+def predict_df(
+    df_new: pd.DataFrame,
+    model: nn.Module,
+    preprocessor,
+    feature_cols: List[str],
+    class_names: List[str],
+    device: torch.device | None = None,
+    topk: int = 3,
+    col_bounds: dict | None = None,
+    ood_threshold: float = 0.0,
+    temperature: float = 10.0,
+):
     device = device or get_device()
     X_df = ensure_columns(df_new, feature_cols)
     X_df = normalize_gender(X_df)
@@ -133,7 +144,8 @@ def predict_df(df_new: pd.DataFrame,
         print(f"[{i}] pred: {class_names[p]}  |  top{topk}: {top}{note}")
     return preds, probs
 
-#interaktive eingabe einer zeile
+
+# interaktive eingabe einer zeile
 def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
     print("\nGib Werte zu den Features ein (leer = NA). Erwartet numerische Eingaben.")
     values = {}
@@ -152,20 +164,31 @@ def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
             values[c] = np.nan
     return pd.DataFrame([values], columns=feature_cols)
 
-#template csv schreiben
+
+# template csv schreiben
 def write_template_csv(path: Path, feature_cols: List[str]):
     import pandas as pd
+
     df = pd.DataFrame(columns=feature_cols)
     df.to_csv(path, index=False)
     print(f"Template geschrieben: {path}")
+
 
 def main():
     ap = argparse.ArgumentParser(description="Inference for Lymphdot")
     ap.add_argument("--model", default="outputs/nn/model.pt")
     ap.add_argument("--preproc", default="outputs/nn/preprocessor.joblib")
     ap.add_argument("--meta", default="outputs/nn/meta.json")
-    ap.add_argument("--csv", type=str, help="CSV mit neuen Fällen (gleiche Roh-Feature-Spalten wie im Training).")
-    ap.add_argument("--interactive", action="store_true", help="Interaktiv einen Fall im Terminal eingeben.")
+    ap.add_argument(
+        "--csv",
+        type=str,
+        help="CSV mit neuen Fällen (gleiche Roh-Feature-Spalten wie im Training).",
+    )
+    ap.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Interaktiv einen Fall im Terminal eingeben.",
+    )
     ap.add_argument("--template", type=str, help="Erzeuge Template-CSV für Eingaben.")
     ap.add_argument("--topk", type=int, default=3)
     ap.add_argument(
@@ -210,6 +233,7 @@ def main():
         ood_threshold=args.ood_threshold,
         temperature=args.temperature,
     )
+
 
 if __name__ == "__main__":
     main()

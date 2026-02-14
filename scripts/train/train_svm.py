@@ -123,17 +123,26 @@ def train_svm(
         y_true=enc.y_test,
         y_pred=preds_test,
         class_names=class_names,
-        out_path=plot_3d_path.parent / f"{plot_3d_path.stem}_correctness{plot_3d_path.suffix}",
+        out_path=plot_3d_path.parent
+        / f"{plot_3d_path.stem}_correctness{plot_3d_path.suffix}",
     )
 
-    print(f"[SVM] Test-Accuracy: {acc:.4f} | Train-LogLoss={ll_train:.4f} Test-LogLoss={ll_test:.4f}")
+    print(
+        f"[SVM] Test-Accuracy: {acc:.4f} | Train-LogLoss={ll_train:.4f} Test-LogLoss={ll_test:.4f}"
+    )
     print(
         f"[SVM] Macro: P={prec_macro:.4f} R={rec_macro:.4f} F1={f1_macro:.4f} | "
         f"Weighted: P={prec_weighted:.4f} R={rec_weighted:.4f} F1={f1_weighted:.4f}"
     )
-    print(classification_report(enc.y_test, preds_test, target_names=class_names, digits=4))
+    print(
+        classification_report(
+            enc.y_test, preds_test, target_names=class_names, digits=4
+        )
+    )
     print("Confusion matrix:\n", confusion_matrix(enc.y_test, preds_test))
-    plot_confusion_matrix(enc.y_test, preds_test, class_names=class_names, out_path=cm_path)
+    plot_confusion_matrix(
+        enc.y_test, preds_test, class_names=class_names, out_path=cm_path
+    )
 
     model_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path.parent.mkdir(parents=True, exist_ok=True)
@@ -166,16 +175,36 @@ def main():
     ap.add_argument("--svm-kernel", dest="svm_kernel", type=str, default="rbf")
     ap.add_argument("--svm-c", dest="svm_c", type=float, default=1.0)
     ap.add_argument("--svm-gamma", dest="svm_gamma", type=str, default="scale")
-    ap.add_argument("--svm-model", dest="svm_model", type=str, default="outputs/svm/model.joblib")
-    ap.add_argument("--svm-meta", dest="svm_meta", type=str, default="outputs/svm/meta.json")
-    ap.add_argument("--svm-plot", dest="svm_plot", type=str, default="outputs/svm/pca_regions.png")
-    ap.add_argument("--svm-loss-plot", dest="svm_loss_plot", type=str, default="outputs/svm/loss.png")
-    ap.add_argument("--svm-plot-3d", dest="svm_plot_3d", type=str, default="outputs/svm/pca_3d.html")
-    ap.add_argument("--svm-cm-plot", dest="svm_cm_plot", type=str, default="outputs/svm/confusion_matrix.png")
+    ap.add_argument(
+        "--svm-model", dest="svm_model", type=str, default="outputs/svm/model.joblib"
+    )
+    ap.add_argument(
+        "--svm-meta", dest="svm_meta", type=str, default="outputs/svm/meta.json"
+    )
+    ap.add_argument(
+        "--svm-plot", dest="svm_plot", type=str, default="outputs/svm/pca_regions.png"
+    )
+    ap.add_argument(
+        "--svm-loss-plot",
+        dest="svm_loss_plot",
+        type=str,
+        default="outputs/svm/loss.png",
+    )
+    ap.add_argument(
+        "--svm-plot-3d", dest="svm_plot_3d", type=str, default="outputs/svm/pca_3d.html"
+    )
+    ap.add_argument(
+        "--svm-cm-plot",
+        dest="svm_cm_plot",
+        type=str,
+        default="outputs/svm/confusion_matrix.png",
+    )
     args = ap.parse_args()
 
     set_seed(args.seed)
-    feature_cols, enc, prep = prepare_data(args.data, args.target, args.feature, args.test_size, args.seed)
+    feature_cols, enc, prep = prepare_data(
+        args.data, args.target, args.feature, args.test_size, args.seed
+    )
     class_names = enc.class_names
 
     train_svm(

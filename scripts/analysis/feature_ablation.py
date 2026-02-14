@@ -38,7 +38,9 @@ def _slugify(name: str) -> str:
     return slug or "feature"
 
 
-def _write_feature_config(path: Path, feature_cols: List[str], base_flags: Dict[str, bool], disabled: str):
+def _write_feature_config(
+    path: Path, feature_cols: List[str], base_flags: Dict[str, bool], disabled: str
+):
     ordered: Dict[str, bool] = {}
     for col in feature_cols:
         ordered[col] = bool(base_flags.get(col, True))
@@ -115,7 +117,9 @@ def _train_nn(
         X_train, y_train, X_test, y_test, batch_size=batch_size, device=device
     )
 
-    model = MLPClassifier(X_train.shape[1], n_classes, hidden=tuple(hidden), p_drop=p_drop).to(device)
+    model = MLPClassifier(
+        X_train.shape[1], n_classes, hidden=tuple(hidden), p_drop=p_drop
+    ).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -129,7 +133,9 @@ def _train_nn(
 
         if te_loss < best_loss - early_stop_min_delta:
             best_loss = te_loss
-            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            best_state = {
+                k: v.detach().cpu().clone() for k, v in model.state_dict().items()
+            }
             no_improve = 0
         else:
             no_improve += 1
@@ -141,7 +147,9 @@ def _train_nn(
         model.load_state_dict(best_state)
 
     _, _, y_true, y_pred = evaluate(model, test_loader, criterion, device)
-    f1 = precision_recall_fscore_support(y_true, y_pred, average="macro", zero_division=0)[2]
+    f1 = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", zero_division=0
+    )[2]
     cm = confusion_matrix(y_true, y_pred, labels=list(range(n_classes)))
     return f1, _normalize_confusion(cm)
 
@@ -159,7 +167,9 @@ def _train_svm(
     model = SVC(kernel="rbf", C=1.0, gamma="scale", probability=True, random_state=0)
     model.fit(prep.X_train, enc.y_train)
     preds_test = model.predict(prep.X_test)
-    f1 = precision_recall_fscore_support(enc.y_test, preds_test, average="macro", zero_division=0)[2]
+    f1 = precision_recall_fscore_support(
+        enc.y_test, preds_test, average="macro", zero_division=0
+    )[2]
     cm = confusion_matrix(enc.y_test, preds_test, labels=list(range(len(class_names))))
     return f1, _normalize_confusion(cm), class_names
 
@@ -183,13 +193,17 @@ def _train_rf(
     )
     rf.fit(prep.X_train, enc.y_train)
     preds_test = rf.predict(prep.X_test)
-    f1 = precision_recall_fscore_support(enc.y_test, preds_test, average="macro", zero_division=0)[2]
+    f1 = precision_recall_fscore_support(
+        enc.y_test, preds_test, average="macro", zero_division=0
+    )[2]
     cm = confusion_matrix(enc.y_test, preds_test, labels=list(range(len(class_names))))
     return f1, _normalize_confusion(cm), class_names
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Single-feature ablation study for NN/SVM/RF.")
+    ap = argparse.ArgumentParser(
+        description="Single-feature ablation study for NN/SVM/RF."
+    )
     ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")
     ap.add_argument("--feature-json", type=str, default="feature.json")
@@ -205,7 +219,12 @@ def main() -> int:
     ap.add_argument("--p-drop", type=float, default=0.1)
     ap.add_argument("--early-stop-patience", type=int, default=0)
     ap.add_argument("--early-stop-min-delta", type=float, default=0.0)
-    ap.add_argument("--max-features", type=int, default=0, help="Limit number of features for quick tests (0=all).")
+    ap.add_argument(
+        "--max-features",
+        type=int,
+        default=0,
+        help="Limit number of features for quick tests (0=all).",
+    )
     args = ap.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -216,7 +235,9 @@ def main() -> int:
     cm_dir.mkdir(parents=True, exist_ok=True)
 
     df = load_data(args.data)
-    split = split_dataset(df, target_col=args.target, test_size=args.test_size, random_state=args.seed)
+    split = split_dataset(
+        df, target_col=args.target, test_size=args.test_size, random_state=args.seed
+    )
     name_to_idx = fit_label_encoder(split.y_train)
     enc_all = encode_labels(split.y_train, split.y_test, name_to_idx)
     class_names = enc_all.class_names
@@ -238,14 +259,18 @@ def main() -> int:
         feature_path = feature_dir / f"feature_off__{slug}.json"
         _write_feature_config(feature_path, all_features, base_flags, disabled)
 
-        enabled_cols = [c for c in all_features if c != disabled and bool(base_flags.get(c, True))]
+        enabled_cols = [
+            c for c in all_features if c != disabled and bool(base_flags.get(c, True))
+        ]
         if not enabled_cols:
             continue
 
         print(f"[{idx}/{len(ablation_features)}] Ablation: {disabled}")
 
         # NN
-        prep_nn = scale_features(split.X_train[enabled_cols], split.X_test[enabled_cols])
+        prep_nn = scale_features(
+            split.X_train[enabled_cols], split.X_test[enabled_cols]
+        )
         f1_nn, cm_nn = _train_nn(
             prep_nn.X_train,
             enc_all.y_train,
@@ -290,7 +315,9 @@ def main() -> int:
     # Save summary CSV
     csv_path = out_dir / "ablation_f1.csv"
     with open(csv_path, "w", encoding="utf-8") as fh:
-        fh.write("feature_disabled,f1_nn,f1_svm,f1_rf,f1_avg,confusion_avg_png,feature_json\n")
+        fh.write(
+            "feature_disabled,f1_nn,f1_svm,f1_rf,f1_avg,confusion_avg_png,feature_json\n"
+        )
         for row in results:
             fh.write(
                 f"{row['feature_disabled']},"

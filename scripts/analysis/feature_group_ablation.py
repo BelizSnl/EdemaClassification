@@ -42,7 +42,12 @@ def _unique(seq: Sequence[str]) -> List[str]:
     return list(dict.fromkeys(seq))
 
 
-def _write_feature_config(path: Path, feature_cols: List[str], base_flags: Dict[str, bool], disabled: List[str]):
+def _write_feature_config(
+    path: Path,
+    feature_cols: List[str],
+    base_flags: Dict[str, bool],
+    disabled: List[str],
+):
     ordered: Dict[str, bool] = {}
     for col in feature_cols:
         ordered[col] = bool(base_flags.get(col, True))
@@ -82,7 +87,9 @@ def _train_nn(
         X_train, y_train, X_test, y_test, batch_size=batch_size, device=device
     )
 
-    model = MLPClassifier(X_train.shape[1], n_classes, hidden=tuple(hidden), p_drop=p_drop).to(device)
+    model = MLPClassifier(
+        X_train.shape[1], n_classes, hidden=tuple(hidden), p_drop=p_drop
+    ).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -96,7 +103,9 @@ def _train_nn(
 
         if te_loss < best_loss - early_stop_min_delta:
             best_loss = te_loss
-            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            best_state = {
+                k: v.detach().cpu().clone() for k, v in model.state_dict().items()
+            }
             no_improve = 0
         else:
             no_improve += 1
@@ -108,7 +117,9 @@ def _train_nn(
         model.load_state_dict(best_state)
 
     _, _, y_true, y_pred = evaluate(model, test_loader, criterion, device)
-    f1 = precision_recall_fscore_support(y_true, y_pred, average="macro", zero_division=0)[2]
+    f1 = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", zero_division=0
+    )[2]
     cm = confusion_matrix(y_true, y_pred, labels=list(range(n_classes)))
     return f1, _normalize_confusion(cm)
 
@@ -124,7 +135,9 @@ def _train_svm(
     model = SVC(kernel="rbf", C=1.0, gamma="scale", probability=True, random_state=0)
     model.fit(X_train, y_train)
     preds_test = model.predict(X_test)
-    f1 = precision_recall_fscore_support(y_test, preds_test, average="macro", zero_division=0)[2]
+    f1 = precision_recall_fscore_support(
+        y_test, preds_test, average="macro", zero_division=0
+    )[2]
     cm = confusion_matrix(y_test, preds_test, labels=list(range(n_classes)))
     return f1, _normalize_confusion(cm)
 
@@ -146,7 +159,9 @@ def _train_rf(
     )
     rf.fit(X_train, y_train)
     preds_test = rf.predict(X_test)
-    f1 = precision_recall_fscore_support(y_test, preds_test, average="macro", zero_division=0)[2]
+    f1 = precision_recall_fscore_support(
+        y_test, preds_test, average="macro", zero_division=0
+    )[2]
     cm = confusion_matrix(y_test, preds_test, labels=list(range(n_classes)))
     return f1, _normalize_confusion(cm)
 
@@ -176,7 +191,9 @@ def main() -> int:
     feature_dir.mkdir(parents=True, exist_ok=True)
 
     df = load_data(args.data)
-    split = split_dataset(df, target_col=args.target, test_size=args.test_size, random_state=args.seed)
+    split = split_dataset(
+        df, target_col=args.target, test_size=args.test_size, random_state=args.seed
+    )
     name_to_idx = fit_label_encoder(split.y_train)
     enc_all = encode_labels(split.y_train, split.y_test, name_to_idx)
     class_names = enc_all.class_names
@@ -203,7 +220,10 @@ def main() -> int:
         ("group1_and_2_off", groups["group1"] + groups["group2"]),
         ("group2_and_3_off", groups["group2"] + groups["group3"]),
         ("group1_and_3_off", groups["group1"] + groups["group3"]),
-        ("group1_and_2_and_3_off", groups["group1"] + groups["group2"] + groups["group3"]),
+        (
+            "group1_and_2_and_3_off",
+            groups["group1"] + groups["group2"] + groups["group3"],
+        ),
     ]
 
     results = []

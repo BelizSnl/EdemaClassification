@@ -1,0 +1,43 @@
+feature_disabled,f1_nn,f1_svm,f1_rf,f1_avg,confusion_avg_png,feature_json
+Geschlecht,0.985012,0.980009,0.976085,0.980369,outputs/feature-ablation/confusion/confusion_avg__01_geschlecht.png,outputs/feature-ablation/feature-json/feature_off__01_geschlecht.json
+Alter,0.985010,0.978757,0.976196,0.979988,outputs/feature-ablation/confusion/confusion_avg__02_alter.png,outputs/feature-ablation/feature-json/feature_off__02_alter.json
+Größe,0.986280,0.985001,0.971134,0.980805,outputs/feature-ablation/confusion/confusion_avg__03_gre.png,outputs/feature-ablation/feature-json/feature_off__03_gre.json
+Gewicht,0.983748,0.976170,0.966109,0.975342,outputs/feature-ablation/confusion/confusion_avg__04_gewicht.png,outputs/feature-ablation/feature-json/feature_off__04_gewicht.json
+Arm links cC,0.987512,0.981253,0.974930,0.981232,outputs/feature-ablation/confusion/confusion_avg__05_arm_links_cc.png,outputs/feature-ablation/feature-json/feature_off__05_arm_links_cc.json
+Arm links cC1,0.983787,0.979957,0.969823,0.977856,outputs/feature-ablation/confusion/confusion_avg__06_arm_links_cc1.png,outputs/feature-ablation/feature-json/feature_off__06_arm_links_cc1.json
+Arm links cD,0.986230,0.978760,0.968596,0.977862,outputs/feature-ablation/confusion/confusion_avg__07_arm_links_cd.png,outputs/feature-ablation/feature-json/feature_off__07_arm_links_cd.json
+Arm links cE,0.985035,0.980009,0.972258,0.979101,outputs/feature-ablation/confusion/confusion_avg__08_arm_links_ce.png,outputs/feature-ablation/feature-json/feature_off__08_arm_links_ce.json
+Arm links cF,0.985010,0.978760,0.976119,0.979963,outputs/feature-ablation/confusion/confusion_avg__09_arm_links_cf.png,outputs/feature-ablation/feature-json/feature_off__09_arm_links_cf.json
+Arm links cG,0.988762,0.977510,0.977368,0.981213,outputs/feature-ablation/confusion/confusion_avg__10_arm_links_cg.png,outputs/feature-ablation/feature-json/feature_off__10_arm_links_cg.json
+Arm rechts cC,0.987460,0.981251,0.974878,0.981196,outputs/feature-ablation/confusion/confusion_avg__11_arm_rechts_cc.png,outputs/feature-ablation/feature-json/feature_off__11_arm_rechts_cc.json
+Arm rechts cC1,0.987499,0.978757,0.969802,0.978686,outputs/feature-ablation/confusion/confusion_avg__12_arm_rechts_cc1.png,outputs/feature-ablation/feature-json/feature_off__12_arm_rechts_cc1.json
+Arm rechts cD,0.982492,0.978770,0.969873,0.977045,outputs/feature-ablation/confusion/confusion_avg__13_arm_rechts_cd.png,outputs/feature-ablation/feature-json/feature_off__13_arm_rechts_cd.json
+Arm rechts cE,0.983722,0.976208,0.971005,0.976979,outputs/feature-ablation/confusion/confusion_avg__14_arm_rechts_ce.png,outputs/feature-ablation/feature-json/feature_off__14_arm_rechts_ce.json
+Arm rechts cF,0.985024,0.978684,0.977362,0.980357,outputs/feature-ablation/confusion/confusion_avg__15_arm_rechts_cf.png,outputs/feature-ablation/feature-json/feature_off__15_arm_rechts_cf.json
+Arm rechts cG,0.988730,0.979973,0.973623,0.980775,outputs/feature-ablation/confusion/confusion_avg__16_arm_rechts_cg.png,outputs/feature-ablation/feature-json/feature_off__16_arm_rechts_cg.json
+Ueber Brust,0.986224,0.978765,0.977429,0.980806,outputs/feature-ablation/confusion/confusion_avg__17_ueber_brust.png,outputs/feature-ablation/feature-json/feature_off__17_ueber_brust.json
+Unter Brust,0.986230,0.978744,0.974806,0.979927,outputs/feature-ablation/confusion/confusion_avg__18_unter_brust.png,outputs/feature-ablation/feature-json/feature_off__18_unter_brust.json
+Tallie cT,0.988743,0.980004,0.977404,0.982050,outputs/feature-ablation/confusion/confusion_avg__19_tallie_ct.png,outputs/feature-ablation/feature-json/feature_off__19_tallie_ct.json
+Hüfte cH,0.986274,0.982501,0.977283,0.982019,outputs/feature-ablation/confusion/confusion_avg__20_hfte_ch.png,outputs/feature-ablation/feature-json/feature_off__20_hfte_ch.json
+Bein links cB1,0.985000,0.976144,0.974794,0.978646,outputs/feature-ablation/confusion/confusion_avg__21_bein_links_cb1.png,outputs/feature-ablation/feature-json/feature_off__21_bein_links_cb1.json
+Bein links cC,0.985036,0.976256,0.972243,0.977845,outputs/feature-ablation/confusion/confusion_avg__22_bein_links_cc.png,outputs/feature-ablation/feature-json/feature_off__22_bein_links_cc.json
+Bein links cD,0.988749,0.973722,0.973640,0.978704,outputs/feature-ablation/confusion/confusion_avg__23_bein_links_cd.png,outputs/feature-ablation/feature-json/feature_off__23_bein_links_cd.json
+Bein links cE,0.987481,0.980014,0.968641,0.978712,outputs/feature-ablation/confusion/confusion_avg__24_bein_links_ce.png,outputs/feature-ablation/feature-json/feature_off__24_bein_links_ce.json
+Bein links cF,0.988750,0.978757,0.972382,0.979963,outputs/feature-ablation/confusion/confusion_avg__25_bein_links_cf.png,outputs/feature-ablation/feature-json/feature_off__25_bein_links_cf.json
+Bein links cG,0.986217,0.980001,0.970958,0.979059,outputs/feature-ablation/confusion/confusion_avg__26_bein_links_cg.png,outputs/feature-ablation/feature-json/feature_off__26_bein_links_cg.json
+Bein rechts cB1,0.987480,0.977457,0.972323,0.979087,outputs/feature-ablation/confusion/confusion_avg__27_bein_rechts_cb1.png,outputs/feature-ablation/feature-json/feature_off__27_bein_rechts_cb1.json
+Bein rechts cC,0.982442,0.979953,0.963480,0.975291,outputs/feature-ablation/confusion/confusion_avg__28_bein_rechts_cc.png,outputs/feature-ablation/feature-json/feature_off__28_bein_rechts_cc.json
+Bein rechts cD,0.985029,0.977516,0.972345,0.978297,outputs/feature-ablation/confusion/confusion_avg__29_bein_rechts_cd.png,outputs/feature-ablation/feature-json/feature_off__29_bein_rechts_cd.json
+Bein rechts cE,0.986249,0.978713,0.968481,0.977814,outputs/feature-ablation/confusion/confusion_avg__30_bein_rechts_ce.png,outputs/feature-ablation/feature-json/feature_off__30_bein_rechts_ce.json
+Bein rechts cF,0.983723,0.977498,0.976151,0.979124,outputs/feature-ablation/confusion/confusion_avg__31_bein_rechts_cf.png,outputs/feature-ablation/feature-json/feature_off__31_bein_rechts_cf.json
+Bein rechts cG,0.986237,0.976248,0.977414,0.979966,outputs/feature-ablation/confusion/confusion_avg__32_bein_rechts_cg.png,outputs/feature-ablation/feature-json/feature_off__32_bein_rechts_cg.json
+Druck_links,0.975030,0.967397,0.962235,0.968221,outputs/feature-ablation/confusion/confusion_avg__33_druck_links.png,outputs/feature-ablation/feature-json/feature_off__33_druck_links.json
+Schwere/Trägheit_links,0.976284,0.964929,0.972285,0.971166,outputs/feature-ablation/confusion/confusion_avg__34_schwere_trgheit_links.png,outputs/feature-ablation/feature-json/feature_off__34_schwere_trgheit_links.json
+Taubheit_links,0.983747,0.977463,0.971097,0.977436,outputs/feature-ablation/confusion/confusion_avg__35_taubheit_links.png,outputs/feature-ablation/feature-json/feature_off__35_taubheit_links.json
+Schmerz_links,0.981209,0.968727,0.971138,0.973692,outputs/feature-ablation/confusion/confusion_avg__36_schmerz_links.png,outputs/feature-ablation/feature-json/feature_off__36_schmerz_links.json
+Erwärmung_links,0.985030,0.977427,0.969971,0.977476,outputs/feature-ablation/confusion/confusion_avg__37_erwrmung_links.png,outputs/feature-ablation/feature-json/feature_off__37_erwrmung_links.json
+Druck_rechts,0.978689,0.959904,0.960938,0.966510,outputs/feature-ablation/confusion/confusion_avg__38_druck_rechts.png,outputs/feature-ablation/feature-json/feature_off__38_druck_rechts.json
+Schwere/Trägheit_rechts,0.982486,0.968769,0.979938,0.977064,outputs/feature-ablation/confusion/confusion_avg__39_schwere_trgheit_rechts.png,outputs/feature-ablation/feature-json/feature_off__39_schwere_trgheit_rechts.json
+Taubheit_rechts,0.984973,0.979993,0.974947,0.979971,outputs/feature-ablation/confusion/confusion_avg__40_taubheit_rechts.png,outputs/feature-ablation/feature-json/feature_off__40_taubheit_rechts.json
+Schmerz_rechts,0.984894,0.972513,0.971024,0.976144,outputs/feature-ablation/confusion/confusion_avg__41_schmerz_rechts.png,outputs/feature-ablation/feature-json/feature_off__41_schmerz_rechts.json
+Erwärmung_rechts,0.981196,0.968602,0.964789,0.971529,outputs/feature-ablation/confusion/confusion_avg__42_erwrmung_rechts.png,outputs/feature-ablation/feature-json/feature_off__42_erwrmung_rechts.json

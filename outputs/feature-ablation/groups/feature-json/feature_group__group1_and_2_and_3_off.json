@@ -1,7 +1,7 @@
 {
-  "Geschlecht": true,
+  "Geschlecht": false,
   "Alter": true,
-  "Größe": true,
+  "Größe": false,
   "Gewicht": true,
   "Arm links cC": false,
   "Arm links cC1": true,

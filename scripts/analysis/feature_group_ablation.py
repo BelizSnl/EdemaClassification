@@ -32,6 +32,7 @@ from scripts.train.train_nn import train_one_epoch, evaluate
 
 
 def _slugify(name: str) -> str:
+    """Convert a scenario name into a filesystem-friendly slug."""
     ascii_name = name.encode("ascii", "ignore").decode()
     base = ascii_name if ascii_name else name
     slug = re.sub(r"[^A-Za-z0-9]+", "_", base).strip("_").lower()
@@ -39,6 +40,7 @@ def _slugify(name: str) -> str:
 
 
 def _unique(seq: Sequence[str]) -> List[str]:
+    """Return unique items while preserving order."""
     return list(dict.fromkeys(seq))
 
 
@@ -48,9 +50,12 @@ def _write_feature_config(
     base_flags: Dict[str, bool],
     disabled: List[str],
 ):
+    """Write a feature toggle JSON with a disabled feature list."""
     ordered: Dict[str, bool] = {}
+    # Preserve feature order and apply disabled toggles.
     for col in feature_cols:
         ordered[col] = bool(base_flags.get(col, True))
+    # Disable selected features.
     for col in disabled:
         if col in ordered:
             ordered[col] = False
@@ -60,6 +65,7 @@ def _write_feature_config(
 
 
 def _normalize_confusion(cm: np.ndarray) -> np.ndarray:
+    """Row-normalize a confusion matrix."""
     cm = cm.astype(float)
     row_sums = cm.sum(axis=1, keepdims=True)
     return np.divide(cm, np.clip(row_sums, a_min=1e-12, a_max=None))
@@ -81,6 +87,7 @@ def _train_nn(
     early_stop_min_delta: float,
     seed: int,
 ) -> tuple[float, np.ndarray]:
+    """Train a NN on the provided arrays and return macro-F1 + confusion."""
     set_seed(seed)
     device = get_device()
     train_loader, test_loader = make_dataloaders(
@@ -97,6 +104,7 @@ def _train_nn(
     best_state = None
     no_improve = 0
 
+    # Epoch loop with optional early stopping.
     for _ in range(epochs):
         _ = train_one_epoch(model, train_loader, criterion, optimizer, device)
         te_loss, _, _, _ = evaluate(model, test_loader, criterion, device)
@@ -132,6 +140,7 @@ def _train_svm(
     n_classes: int,
     seed: int,
 ) -> tuple[float, np.ndarray]:
+    """Train an SVM and return macro-F1 + confusion."""
     model = SVC(kernel="rbf", C=1.0, gamma="scale", probability=True, random_state=0)
     model.fit(X_train, y_train)
     preds_test = model.predict(X_test)
@@ -150,6 +159,7 @@ def _train_rf(
     n_classes: int,
     seed: int,
 ) -> tuple[float, np.ndarray]:
+    """Train a RandomForest and return macro-F1 + confusion."""
     rf = RandomForestClassifier(
         n_estimators=300,
         max_depth=None,
@@ -167,6 +177,7 @@ def _train_rf(
 
 
 def main() -> int:
+    """Run group ablation across NN/SVM/RF and write summary CSV."""
     ap = argparse.ArgumentParser(description="Group feature ablation for NN/SVM/RF.")
     ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")
@@ -228,6 +239,7 @@ def main() -> int:
 
     results = []
 
+    # Evaluate each predefined group-ablation scenario.
     for name, disabled_raw in scenarios:
         disabled = _unique(disabled_raw)
         missing = [c for c in disabled if c not in all_features]
@@ -289,6 +301,7 @@ def main() -> int:
     csv_path = out_dir / "group_ablation_f1.csv"
     with open(csv_path, "w", encoding="utf-8") as fh:
         fh.write("scenario,disabled_features,f1_nn,f1_svm,f1_rf,f1_avg,feature_json\n")
+        # Write per-scenario results to CSV.
         for row in results:
             fh.write(
                 f"{row['scenario']},"

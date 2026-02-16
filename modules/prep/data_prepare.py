@@ -42,6 +42,7 @@ class PreprocessResult:
 
 # ---------------- Dataset -----------------
 def load_data(data_path):
+    """Load CSV dataset into a DataFrame."""
     data = pd.read_csv(data_path)
     print(f"Data load Done hehe")
     return data
@@ -54,6 +55,7 @@ def split_dataset(
     test_size: float = 0.2,
     random_state: int = 42,
 ) -> SplitResult:
+    """Split dataset into stratified train/test sets."""
     if target_col not in df.columns:
         raise KeyError(f"Zielspalte '{target_col}' nicht gefunden.")
     feature_cols = [c for c in df.columns if c != target_col]
@@ -68,6 +70,7 @@ def split_dataset(
 
 # ---------------- label-encoding ----------------
 def fit_label_encoder(y_train: pd.Series) -> Dict[str, int]:
+    """Create a deterministic label->index mapping from training labels."""
     class_names = sorted(y_train.unique().tolist())
     return {name: i for i, name in enumerate(class_names)}
 
@@ -75,6 +78,7 @@ def fit_label_encoder(y_train: pd.Series) -> Dict[str, int]:
 def encode_labels(
     y_train: pd.Series, y_test: pd.Series, name_to_idx: Dict[str, int]
 ) -> LabelEncoderResult:
+    """Encode train/test labels using a provided mapping."""
     unknown_test = set(y_test.unique()) - set(name_to_idx.keys())
     if unknown_test:
         raise ValueError(f"Unbekannte Klassen im Test-Set: {sorted(unknown_test)}")
@@ -90,6 +94,7 @@ def encode_labels(
 def scale_features(
     X_train_df: pd.DataFrame, X_test_df: pd.DataFrame
 ) -> PreprocessResult:
+    """Impute, scale, and clip numeric features; return transformers and arrays."""
     # Kopien anlegen, damit wir Spalten gefahrlos transformieren können
     X_train_df = X_train_df.copy()
     X_test_df = X_test_df.copy()
@@ -112,6 +117,7 @@ def scale_features(
 
     # Per-Feature-Grenzen aus Trainingsdaten ableiten (robust über Quantile)
     col_bounds: Dict[str, Tuple[float, float]] = {}
+    # Derive robust per-feature clipping bounds from training data.
     for col in num_cols:
         s = X_train_df[col].dropna()
         if s.empty:

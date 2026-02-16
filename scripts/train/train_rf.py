@@ -40,6 +40,7 @@ from modules.vis.plots import (
 
 
 def set_seed(seed: int = 42):
+    """Set random seeds for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
 
@@ -51,6 +52,7 @@ def prepare_data(
     test_size: float,
     seed: int,
 ):
+    """Load data, apply feature toggles, encode labels, and scale features."""
     df = load_data(data_path)
     split = split_dataset(df, target_col=target, test_size=test_size, random_state=seed)
     if feature_path:
@@ -81,6 +83,7 @@ def train_random_forest(
     n_jobs: int,
     seed: int,
 ):
+    """Train a RandomForest model and save artifacts/plots."""
     rf = RandomForestClassifier(
         n_estimators=n_estimators,
         max_depth=max_depth if max_depth and max_depth > 0 else None,
@@ -168,6 +171,7 @@ def train_random_forest(
 
 
 def main():
+    """CLI entry point for RandomForest training and artifact generation."""
     ap = argparse.ArgumentParser(description="RandomForest-Training für LymphDot")
     ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")

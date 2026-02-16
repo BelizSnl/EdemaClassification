@@ -40,6 +40,7 @@ from modules.vis.plots import (
 
 
 def set_seed(seed: int = 42):
+    """Set random seeds for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
 
@@ -51,6 +52,7 @@ def prepare_data(
     test_size: float,
     seed: int,
 ):
+    """Load data, apply feature toggles, encode labels, and scale features."""
     df = load_data(data_path)
     split = split_dataset(df, target_col=target, test_size=test_size, random_state=seed)
     if feature_path:
@@ -79,6 +81,7 @@ def train_svm(
     c_value: float,
     gamma: str,
 ):
+    """Train an SVM model and save artifacts/plots."""
     model = SVC(kernel=kernel, C=c_value, gamma=gamma, probability=True, random_state=0)
     model.fit(prep.X_train, enc.y_train)
 
@@ -160,6 +163,7 @@ def train_svm(
 
 
 def main():
+    """CLI entry point for SVM training and artifact generation."""
     ap = argparse.ArgumentParser(description="SVM-Training für LymphDot")
     ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")

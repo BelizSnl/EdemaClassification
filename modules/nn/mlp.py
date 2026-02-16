@@ -4,6 +4,7 @@ import torch.nn as nn
 
 
 class MLPClassifier(nn.Module):
+    """Simple MLP classifier with two hidden layers and dropout."""
     def __init__(
         self,
         in_features: int,
@@ -11,6 +12,7 @@ class MLPClassifier(nn.Module):
         hidden: tuple[int, int] = (256, 128),
         p_drop: float = 0.1,
     ):
+        """Build the MLP architecture based on input/output sizes."""
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(in_features, hidden[0]),
@@ -23,4 +25,5 @@ class MLPClassifier(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass returning logits for each class."""
         return self.net(x)

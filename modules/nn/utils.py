@@ -9,6 +9,7 @@ import random
 
 # setze zufallsseed für reproduzierbarkeit
 def set_seed(seed: int = 42):
+    """Set random seeds for reproducibility across Python/NumPy/PyTorch."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -18,6 +19,7 @@ def set_seed(seed: int = 42):
 
 # gerät bestimmen
 def get_device() -> torch.device:
+    """Select the best available compute device (CUDA, MPS, or CPU)."""
     if torch.cuda.is_available():
         return torch.device("cuda")
     if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
@@ -27,6 +29,7 @@ def get_device() -> torch.device:
 
 # gerät information
 def device_info(dev: torch.device) -> str:
+    """Return a user-friendly description of the selected device."""
     if dev.type == "cuda":
         try:
             name = torch.cuda.get_device_name(0)
@@ -47,6 +50,7 @@ def make_dataloaders(
     batch_size: int = 64,
     device: torch.device | None = None,
 ) -> tuple[DataLoader, DataLoader]:
+    """Create PyTorch train/test DataLoaders from numpy arrays."""
     if device is None:
         device = get_device()
     pin_memory = device.type == "cuda"

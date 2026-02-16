@@ -19,6 +19,7 @@ from modules.nn.mlp import MLPClassifier
 
 # gerät bestimmen
 def get_device() -> torch.device:
+    """Select the best available compute device (CUDA, MPS, or CPU)."""
     if torch.cuda.is_available():
         return torch.device("cuda")
     if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
@@ -32,6 +33,7 @@ def load_artifacts(
     preproc_path="outputs/nn/preprocessor.joblib",
     meta_path="outputs/nn/meta.json",
 ):
+    """Load NN checkpoint, preprocessor, and metadata."""
     ckpt = torch.load(model_path, map_location="cpu")
     meta = ckpt.get("meta", {})
     n_classes = meta.get("n_classes")
@@ -62,13 +64,16 @@ def load_artifacts(
 
 # sicherstellen, dass alle benötigten spalten vorhanden sind
 def ensure_columns(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
+    """Ensure all required feature columns exist and are ordered."""
     missing = [c for c in feature_cols if c not in df.columns]
+    # Add any missing columns as NaN to preserve order.
     for c in missing:
         df[c] = np.nan
     return df[feature_cols].copy()
 
 
 def normalize_gender(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize gender column to numeric encoding (0/1)."""
     if "Geschlecht" not in df.columns:
         return df
     male = {"m", "männlich", "maennlich", "mann", "male"}
@@ -92,8 +97,10 @@ def normalize_gender(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_bounds(df: pd.DataFrame, bounds: dict) -> pd.DataFrame:
+    """Clip numeric columns to per-feature bounds."""
     if not bounds:
         return df
+    # Apply clipping per feature if bounds exist.
     for col, (lo, hi) in bounds.items():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").clip(lo, hi)
@@ -124,6 +131,7 @@ def predict_df(
     ood_threshold: float = 0.0,
     temperature: float = 10.0,
 ):
+    """Run NN inference for a prepared DataFrame and print top-k results."""
     device = device or get_device()
     X_df = ensure_columns(df_new, feature_cols)
     X_df = normalize_gender(X_df)
@@ -137,6 +145,7 @@ def predict_df(
     logits = model(xb) / float(temperature)
     probs = torch.softmax(logits, dim=1).cpu().numpy()
     preds = probs.argmax(axis=1)
+    # Print per-row top-k predictions (with OOD flag if needed).
     for i, p in enumerate(preds):
         top_idx = probs[i].argsort()[::-1][:topk]
         top = ", ".join([f"{class_names[j]}={probs[i][j]:.3f}" for j in top_idx])
@@ -147,8 +156,10 @@ def predict_df(
 
 # interaktive eingabe einer zeile
 def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
+    """Prompt the user for one row of feature values in the terminal."""
     print("\nGib Werte zu den Features ein (leer = NA). Erwartet numerische Eingaben.")
     values = {}
+    # Collect values in feature order for a single-row DataFrame.
     for c in feature_cols:
         val = input(f"{c}: ").strip()
         if val == "":
@@ -167,6 +178,7 @@ def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
 
 # template csv schreiben
 def write_template_csv(path: Path, feature_cols: List[str]):
+    """Write an empty template CSV with the expected feature columns."""
     import pandas as pd
 
     df = pd.DataFrame(columns=feature_cols)
@@ -175,6 +187,7 @@ def write_template_csv(path: Path, feature_cols: List[str]):
 
 
 def main():
+    """CLI entry point for NN inference."""
     ap = argparse.ArgumentParser(description="Inference for Lymphdot")
     ap.add_argument("--model", default="outputs/nn/model.pt")
     ap.add_argument("--preproc", default="outputs/nn/preprocessor.joblib")

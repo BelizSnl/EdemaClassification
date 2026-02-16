@@ -15,13 +15,16 @@ if str(ROOT) not in sys.path:
 
 
 def ensure_columns(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
+    """Ensure all required feature columns exist and are ordered."""
     missing = [c for c in feature_cols if c not in df.columns]
+    # Add any missing columns as NaN to preserve order.
     for c in missing:
         df[c] = np.nan
     return df[feature_cols].copy()
 
 
 def normalize_gender(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize gender column to numeric encoding (0/1)."""
     if "Geschlecht" not in df.columns:
         return df
     male = {"m", "männlich", "maennlich", "mann", "male"}
@@ -45,8 +48,10 @@ def normalize_gender(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_bounds(df: pd.DataFrame, bounds: Dict[str, Any]) -> pd.DataFrame:
+    """Clip numeric columns to per-feature bounds."""
     if not bounds:
         return df
+    # Apply clipping per feature if bounds exist.
     for col, (lo, hi) in bounds.items():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").clip(lo, hi)
@@ -64,8 +69,10 @@ def detect_ood(X: np.ndarray, threshold: float) -> np.ndarray:
 
 
 def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
+    """Prompt the user for one row of feature values in the terminal."""
     print("\nGib Werte zu den Features ein (leer = NA). Erwartet numerische Eingaben.")
     values = {}
+    # Collect values in feature order for a single-row DataFrame.
     for c in feature_cols:
         val = input(f"{c}: ").strip()
         if val == "":
@@ -83,12 +90,14 @@ def interactive_row(feature_cols: List[str]) -> pd.DataFrame:
 
 
 def write_template_csv(path: Path, feature_cols: List[str]):
+    """Write an empty template CSV with the expected feature columns."""
     df = pd.DataFrame(columns=feature_cols)
     df.to_csv(path, index=False)
     print(f"Template geschrieben: {path}")
 
 
 def load_rf_artifacts(model_path: str) -> Dict[str, Any]:
+    """Load RF artifacts (model + preprocessor + metadata)."""
     data = joblib.load(model_path)
     required = {"model", "preprocessor", "feature_cols", "class_names"}
     if not required.issubset(data.keys()):
@@ -99,6 +108,7 @@ def load_rf_artifacts(model_path: str) -> Dict[str, Any]:
 
 
 def predict_df(df_new: pd.DataFrame, artifacts: Dict[str, Any], topk: int = 3):
+    """Run RF inference for a prepared DataFrame and print top-k results."""
     feature_cols = artifacts["feature_cols"]
     class_names = artifacts["class_names"]
     ood_threshold = artifacts.get("ood_threshold", 0.0)
@@ -112,6 +122,7 @@ def predict_df(df_new: pd.DataFrame, artifacts: Dict[str, Any], topk: int = 3):
     probs = model.predict_proba(X)
 
     preds = probs.argmax(axis=1)
+    # Print per-row top-k predictions (with OOD flag if needed).
     for i, p in enumerate(preds):
         top_idx = probs[i].argsort()[::-1][:topk]
         top = ", ".join([f"{class_names[j]}={probs[i][j]:.3f}" for j in top_idx])
@@ -121,6 +132,7 @@ def predict_df(df_new: pd.DataFrame, artifacts: Dict[str, Any], topk: int = 3):
 
 
 def main():
+    """CLI entry point for RandomForest inference."""
     ap = argparse.ArgumentParser(description="Inferenz für RandomForest-Baseline")
     ap.add_argument("--csv", type=str, help="CSV mit neuen Fällen.")
     ap.add_argument(

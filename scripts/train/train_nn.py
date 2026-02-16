@@ -39,9 +39,10 @@ from modules.vis.plots import (
 
 # eine epoche trainiert und validiert
 def train_one_epoch(model, loader, criterion, optimizer, device):
+    """Train the model for one epoch and return loss/accuracy."""
     model.train()
     running_loss, correct, total = 0.0, 0, 0
-    # schleife über batches
+    # Schleife über alle Batches im Training.
     for xb, yb in loader:
         xb, yb = xb.to(device), yb.to(device)
         optimizer.zero_grad(set_to_none=True)  # Gradienten zurücksetzen
@@ -60,10 +61,11 @@ def train_one_epoch(model, loader, criterion, optimizer, device):
 
 @torch.no_grad()  # keine gradientenberechnung für evaluation
 def evaluate(model, loader, criterion, device):
+    """Evaluate the model and return loss/accuracy plus labels."""
     model.eval()
     running_loss, correct, total = 0.0, 0, 0
     all_y, all_p = [], []
-    # schleife über batches
+    # Schleife über alle Batches im Test.
     for xb, yb in loader:
         xb, yb = xb.to(device), yb.to(device)
         logits = model(xb)
@@ -88,6 +90,7 @@ def save_artifacts(
     preproc_path: str = "outputs/nn/preprocessor.joblib",
     meta_path: str = "outputs/nn/meta.json",
 ):
+    """Persist preprocessor metadata and class names for inference."""
     Path(preproc_path).parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(
         {
@@ -103,6 +106,7 @@ def save_artifacts(
 
 
 def main():
+    """CLI entry point for NN training and artifact generation."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=str, default="Lymphdoc_medi_4k.csv")
     ap.add_argument("--target", type=str, default="Klassifizierung")
@@ -201,6 +205,7 @@ def main():
     best_epoch = 0
     no_improve = 0
     history = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []}
+    # Training loop across epochs with optional early stopping.
     for epoch in range(1, args.epochs + 1):
         tr_loss, tr_acc = train_one_epoch(
             model, train_loader, criterion, optimizer, device

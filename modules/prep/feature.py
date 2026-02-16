@@ -6,6 +6,7 @@ from typing import Iterable, List, Dict
 
 
 def _normalize_flag(value) -> bool:
+    """Normalize various truthy/falsey values to a boolean."""
     if isinstance(value, bool):
         return value
     if isinstance(value, (int, float)):
@@ -44,6 +45,7 @@ def ensure_feature(config_path: str | Path, feature_cols: Iterable[str]) -> List
     needs_update = not file_existed
     ordered: Dict[str, bool] = {}
 
+    # Preserve feature order and apply per-feature toggles.
     for col in feature_cols:
         enabled = toggles.get(col, True)
         if col not in toggles:
@@ -55,6 +57,7 @@ def ensure_feature(config_path: str | Path, feature_cols: Iterable[str]) -> List
     extra_toggles = [c for c in toggles.keys() if c not in ordered]
     if extra_toggles:
         # Keep extras (maybe columns no longer present) at the end to avoid silent loss.
+        # Keep extra toggles to avoid silent loss of unused keys.
         for col in extra_toggles:
             ordered[col] = toggles[col]
         needs_update = True

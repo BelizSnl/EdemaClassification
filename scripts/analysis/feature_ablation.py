@@ -32,6 +32,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 def _slugify(name: str) -> str:
+    """Convert a feature name into a filesystem-friendly slug."""
     ascii_name = name.encode("ascii", "ignore").decode()
     base = ascii_name if ascii_name else name
     slug = re.sub(r"[^A-Za-z0-9]+", "_", base).strip("_").lower()
@@ -41,7 +42,9 @@ def _slugify(name: str) -> str:
 def _write_feature_config(
     path: Path, feature_cols: List[str], base_flags: Dict[str, bool], disabled: str
 ):
+    """Write a feature toggle JSON with one disabled feature."""
     ordered: Dict[str, bool] = {}
+    # Preserve feature order and apply the single disabled toggle.
     for col in feature_cols:
         ordered[col] = bool(base_flags.get(col, True))
     if disabled in ordered:
@@ -52,12 +55,14 @@ def _write_feature_config(
 
 
 def _normalize_confusion(cm: np.ndarray) -> np.ndarray:
+    """Row-normalize a confusion matrix."""
     cm = cm.astype(float)
     row_sums = cm.sum(axis=1, keepdims=True)
     return np.divide(cm, np.clip(row_sums, a_min=1e-12, a_max=None))
 
 
 def _plot_confusion_avg(cm: np.ndarray, class_names: List[str], out_path: Path):
+    """Plot a normalized confusion matrix and save as PNG."""
     import matplotlib.pyplot as plt
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -78,6 +83,7 @@ def _plot_confusion_avg(cm: np.ndarray, class_names: List[str], out_path: Path):
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
 
     thresh = cm.max() / 2.0 if cm.size else 0.0
+    # Annotate each confusion-matrix cell.
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
             ax.text(
@@ -111,6 +117,7 @@ def _train_nn(
     early_stop_min_delta: float,
     seed: int,
 ) -> tuple[float, np.ndarray]:
+    """Train a NN on the provided arrays and return macro-F1 + confusion."""
     set_seed(seed)
     device = get_device()
     train_loader, test_loader = make_dataloaders(
@@ -127,6 +134,7 @@ def _train_nn(
     best_state = None
     no_improve = 0
 
+    # Epoch loop with optional early stopping.
     for _ in range(epochs):
         _ = train_one_epoch(model, train_loader, criterion, optimizer, device)
         te_loss, _, _, _ = evaluate(model, test_loader, criterion, device)
@@ -160,6 +168,7 @@ def _train_svm(
     name_to_idx: Dict[str, int],
     seed: int,
 ) -> tuple[float, np.ndarray, List[str]]:
+    """Train an SVM and return macro-F1 + confusion."""
     class_names = [k for k, _ in sorted(name_to_idx.items(), key=lambda kv: kv[1])]
     enc = encode_labels(split.y_train, split.y_test, name_to_idx)
     prep = scale_features(split.X_train[feature_cols], split.X_test[feature_cols])
@@ -180,6 +189,7 @@ def _train_rf(
     name_to_idx: Dict[str, int],
     seed: int,
 ) -> tuple[float, np.ndarray, List[str]]:
+    """Train a RandomForest and return macro-F1 + confusion."""
     class_names = [k for k, _ in sorted(name_to_idx.items(), key=lambda kv: kv[1])]
     enc = encode_labels(split.y_train, split.y_test, name_to_idx)
     prep = scale_features(split.X_train[feature_cols], split.X_test[feature_cols])
@@ -201,6 +211,7 @@ def _train_rf(
 
 
 def main() -> int:
+    """Run single-feature ablation across NN/SVM/RF and write summary CSV."""
     ap = argparse.ArgumentParser(
         description="Single-feature ablation study for NN/SVM/RF."
     )
@@ -254,6 +265,7 @@ def main() -> int:
 
     results = []
 
+    # Iterate through features, disabling one at a time.
     for idx, disabled in enumerate(ablation_features, start=1):
         slug = f"{idx:02d}_{_slugify(disabled)}"
         feature_path = feature_dir / f"feature_off__{slug}.json"
@@ -318,6 +330,7 @@ def main() -> int:
         fh.write(
             "feature_disabled,f1_nn,f1_svm,f1_rf,f1_avg,confusion_avg_png,feature_json\n"
         )
+        # Write per-feature results to CSV.
         for row in results:
             fh.write(
                 f"{row['feature_disabled']},"

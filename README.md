@@ -1,10 +1,10 @@
 # Edema Klassifikation
 
-**Was macht dieses Projekt?**  
-Ein Ödem ist eine chronische Schwellung, die durch Flüssigkeitsansammlungen im Gewebe entsteht.  
-Dieses Projekt klassifiziert Ödem‑Typen und ‑Stadien aus tabellarischen Patientendaten (CSV). Es trainiert drei Modelle (MLP‑NN, SVM, Random Forest) und bietet eine Inferenz‑Pipeline mit Soft‑Voting‑Ensemble sowie eine GUI für Einzel‑ oder Batch‑Vorhersagen.
+**What does this project do?**  
+Edema is a chronic swelling caused by fluid accumulation in tissue.  
+This project classifies edema types and stages from tabular patient data (CSV). It trains three models (MLP‑NN, SVM, Random Forest) and provides an inference pipeline with a soft‑voting ensemble plus a GUI for single or batch predictions.
 
-Klassen (8):
+Classes (8):
 - gesund
 - Lymphödem Stadium 1
 - Lymphödem Stadium 2
@@ -15,12 +15,12 @@ Klassen (8):
 - Lipo-Lymphödem
 
 **Training**  
-Einmalig installieren:
+Install once:
 ```bash
 pip install -r requirements.txt
 ```
 
-Für die beste Inferenzqualität sollten alle drei Modelle (NN, SVM, RF) trainiert werden. Alternativ kann auch nur ein Modell trainiert und dessen Inferenz‑Script genutzt werden.
+For the best inference quality, train all three models (NN, SVM, RF). You can also train just one model and run inference only with that model’s script.
 
 ```bash
 python scripts/train/train_nn.py --data Lymphdoc_medi_4k.csv --target Klassifizierung
@@ -28,36 +28,36 @@ python scripts/train/train_svm.py --data Lymphdoc_medi_4k.csv --target Klassifiz
 python scripts/train/train_rf.py --data Lymphdoc_medi_4k.csv --target Klassifizierung
 ```
 
-Outputs & Artefakte werden in `outputs/` gespeichert:
-- `outputs/nn/`: NN‑Modell, Preprocessor, Plots
-- `outputs/svm/`: SVM‑Modell, Plots
-- `outputs/rf/`: RF‑Modell, Plots
+Outputs & artifacts are written to `outputs/`:
+- `outputs/nn/`: NN model, preprocessor, plots
+- `outputs/svm/`: SVM model, plots
+- `outputs/rf/`: RF model, plots
 
-**Inferenz**
-GUI (empfohlen für schnelle Nutzung):
+**Inference**
+GUI (recommended for quick use):
 ```bash
 python gui/gui.py
 ```
 
-Ensemble‑Inferenz ohne GUI (NN + SVM + RF, Soft‑Voting):
+Ensemble inference without GUI (NN + SVM + RF, soft‑voting):
 ```bash
 python scripts/inference/inference_main.py --csv "PATH/to/file.csv"
 ```
 
-Einzel‑Modell‑Inferenz (nur CSV):
+Single‑model inference (CSV only):
 ```bash
 python scripts/inference/inference_nn.py --csv "PATH/to/file.csv"
 python scripts/inference/inference_svm.py --csv "PATH/to/file.csv"
 python scripts/inference/inference_rf.py --csv "PATH/to/file.csv"
 ```
 
-Interaktiv (Terminal‑Eingabe, nur NN):
+Interactive (terminal input, NN only):
 ```bash
 python scripts/inference/inference_nn.py --interactive
 python scripts/inference/inference_nn.py --template new.csv
 ```
 
-**Projektstruktur**
+**Project Structure**
 ```
 .
 ├─ gui/
@@ -77,17 +77,17 @@ python scripts/inference/inference_nn.py --template new.csv
 │     └─ train_rf.py
 ├─ modules/
 │  ├─ nn/        # MLP, Utils
-│  ├─ prep/      # Laden, Split, Preprocessing
+│  ├─ prep/      # Loading, Split, Preprocessing
 │  └─ vis/       # Plots
-├─ outputs/      # erzeugte Modelle/Plots
+├─ outputs/      # Generated models/plots
 │  └─ feature-ablation/
 ├─ Lymphdoc_medi_4k.csv
 └─ requirements.txt
 ```
 
-**Benötigte Messungen (CSV‑Spalten)**
-Für eigene CSV‑Dateien müssen die folgenden Feature‑Spalten verwendet werden.  
-Training‑CSVs müssen zusätzlich die Zielspalte `Klassifizierung` enthalten. Inferenz‑CSVs verwenden nur die Feature‑Spalten unten.
+**Required Measurements (CSV Columns)**
+For custom CSV files, use the following feature columns.  
+Training CSVs must also include the target column `Klassifizierung`. Inference CSVs use only the feature columns below.
 
 ```text
 Geschlecht (Gender)
@@ -134,11 +134,11 @@ Schmerz_rechts (Pain right)
 Erwärmung_rechts (Warmth right)
 ```
 
-Mess‑Referenzen:
+Measurement reference images:
 ![Medi arm](gui/Medi_arm.png)
 ![Medi leg](gui/Medi_bein.png)
 
-**Paper & Plakat**
-Paper (PDF im Repo): `paper.pdf`  
-Plakat:
+**Paper & Poster**
+Paper (PDF in repo): `paper.pdf`  
+Poster:
 ![Poster](Plakat.png)

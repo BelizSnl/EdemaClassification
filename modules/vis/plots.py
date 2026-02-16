@@ -11,6 +11,7 @@ from sklearn.metrics import confusion_matrix
 
 
 def _ensure_out_dir(path: str | Path) -> Path:
+    """Ensure output directory exists and return the resolved path."""
     out_path = Path(path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     return out_path
@@ -194,6 +195,7 @@ def plot_pca_3d_correctness(
 
     correct = y_true == y_pred
     traces = []
+    # Build separate traces for correct vs. wrong predictions.
     for mask, name, color in (
         (correct, "Correct", "green"),
         (~correct, "Wrong", "red"),
@@ -276,6 +278,7 @@ def plot_confusion_matrix(
     # Werte eintragen
     fmt = ".2f" if normalize else "d"
     thresh = cm.max() / 2.0 if cm.size else 0.0
+    # Annotate each confusion-matrix cell.
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
             ax.text(

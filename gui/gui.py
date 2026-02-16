@@ -20,27 +20,33 @@ logo_url = LOGO_PATH.as_posix()
 
 
 class DropFrame(QtWidgets.QFrame):
+    """Frame that accepts CSV drag-and-drop and emits the selected path."""
     fileDropped = QtCore.pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
+        """Initialize drag-and-drop state."""
         super().__init__(*args, **kwargs)
         self.setAcceptDrops(True)
         self.setProperty("dragging", False)
         self.overlay: QtWidgets.QWidget | None = None
 
     def set_overlay(self, overlay: QtWidgets.QWidget) -> None:
+        """Attach a visual overlay and keep it aligned with the frame."""
         self.overlay = overlay
         self._update_overlay_geometry()
 
     def _update_overlay_geometry(self):
+        """Keep the overlay size in sync with the frame size."""
         if self.overlay:
             self.overlay.setGeometry(self.rect())
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        """Update overlay when the frame is resized."""
         super().resizeEvent(event)
         self._update_overlay_geometry()
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        """Accept CSV drags and update the visual state."""
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
             if urls:
@@ -54,6 +60,7 @@ class DropFrame(QtWidgets.QFrame):
         event.ignore()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        """Emit the dropped CSV path and reset the visual state."""
         urls = event.mimeData().urls()
         if urls:
             path = urls[0].toLocalFile()
@@ -65,6 +72,7 @@ class DropFrame(QtWidgets.QFrame):
         event.acceptProposedAction()
 
     def dragLeaveEvent(self, event: QtGui.QDragLeaveEvent) -> None:
+        """Reset visual state when drag leaves the frame."""
         self.setProperty("dragging", False)
         self.style().unpolish(self)
         self.style().polish(self)
@@ -72,20 +80,25 @@ class DropFrame(QtWidgets.QFrame):
 
 
 class CircularProgress(QtWidgets.QWidget):
+    """Circular progress indicator for long-running operations."""
     def __init__(self, diameter: int = 110, parent: QtWidgets.QWidget | None = None):
+        """Create a circular progress widget with a fixed diameter."""
         super().__init__(parent)
         self._value = 0
         self._diameter = diameter
         self.setFixedSize(diameter, diameter)
 
     def setValue(self, val: int):
+        """Set progress value (0–100) and repaint."""
         self._value = max(0, min(100, val))
         self.update()
 
     def value(self) -> int:
+        """Return current progress value."""
         return self._value
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
+        """Draw the progress arc and numeric percentage."""
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         rect = self.rect().adjusted(6, 6, -6, -6)
@@ -206,7 +219,9 @@ QScrollBar::add-page, QScrollBar::sub-page {
 
 
 class MainWindow(QtWidgets.QMainWindow):
+    """Main application window for CSV upload and manual input inference."""
     def __init__(self):
+        """Initialize state, inference backend, and UI."""
         super().__init__()
         self.setWindowTitle("Benutzeroberfläche")
         self.ensemble = EnsembleInference()
@@ -233,6 +248,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._init_ui()
 
     def _init_ui(self):
+        """Build the main layout, top bar, and content container."""
         container = QtWidgets.QWidget()
         container.setObjectName("base")
         outer_layout = QtWidgets.QVBoxLayout(container)
@@ -286,6 +302,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setMinimumSize(1200, 800)
 
     def _build_upload_section(self) -> QtWidgets.QWidget:
+        """Create the CSV upload panel with drop area and file list."""
         frame = QtWidgets.QFrame()
         frame.setObjectName("uploadFrame")
         frame.setStyleSheet(
@@ -454,6 +471,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return frame
 
     def _build_manual_tab(self) -> QtWidgets.QWidget:
+        """Create the manual input form with grouped measurement fields."""
         content = QtWidgets.QWidget()
         content.setObjectName("manualContent")
         content.setStyleSheet("#manualContent { background: #f5f6fa; color: #111827; }")
@@ -492,11 +510,13 @@ class MainWindow(QtWidgets.QMainWindow):
         form_layout.setSpacing(18)
 
         def add_section_title(text: str):
+            """Insert a section title label into the form layout."""
             title = QtWidgets.QLabel(text)
             title.setStyleSheet("font-size: 16px; font-weight: 700; padding: 4px 0;")
             form_layout.addWidget(title)
 
         def add_divider():
+            """Insert a horizontal divider line."""
             line = QtWidgets.QFrame()
             line.setFrameShape(QtWidgets.QFrame.HLine)
             line.setFrameShadow(QtWidgets.QFrame.Sunken)
@@ -504,6 +524,7 @@ class MainWindow(QtWidgets.QMainWindow):
             form_layout.addWidget(line)
 
         def add_single_row(label: str, col: str):
+            """Add a single input row and register its line edit."""
             row = QtWidgets.QHBoxLayout()
             lbl = QtWidgets.QLabel(label)
             lbl.setMinimumWidth(140)
@@ -515,6 +536,7 @@ class MainWindow(QtWidgets.QMainWindow):
             form_layout.addLayout(row)
 
         def add_pair_row(label: str, col_left: str, col_right: str):
+            """Add a paired left/right input row and register both fields."""
             row = QtWidgets.QHBoxLayout()
             row.setSpacing(12)
             lbl = QtWidgets.QLabel(label)
@@ -556,6 +578,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Messdaten (Maßband)
         add_section_title("Messdaten (Maßband)")
+        # Build paired left/right measurement rows.
         for base, left_col, right_col in [
             ("Arm cC", "Arm links cC", "Arm rechts cC"),
             ("Arm cC1", "Arm links cC1", "Arm rechts cC1"),
@@ -572,6 +595,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ]:
             add_pair_row(base, left_col, right_col)
 
+        # Add single-body measurement fields.
         for label, col in [
             ("Über Brust", "Ueber Brust"),
             ("Unter Brust", "Unter Brust"),
@@ -585,6 +609,7 @@ class MainWindow(QtWidgets.QMainWindow):
         illustration_row.setSpacing(16)
         illustration_row.setAlignment(QtCore.Qt.AlignCenter)
         has_illustration = False
+        # Add measurement reference images if available.
         for img_name in ["Medi_arm.png", "Medi_bein.png"]:
             img_path = ROOT / "gui" / img_name
             if not img_path.exists():
@@ -615,6 +640,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Symptome
         add_section_title("Symptome")
+        # Build paired symptom rows.
         for base, left_col, right_col in [
             ("Druck", "Druck_links", "Druck_rechts"),
             ("Schwere/Trägheit", "Schwere/Trägheit_links", "Schwere/Trägheit_rechts"),
@@ -630,6 +656,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if remaining:
             add_divider()
             add_section_title("Weitere Angaben")
+            # Add any remaining features not mapped above.
             for col in remaining:
                 add_single_row(col, col)
 
@@ -654,7 +681,9 @@ class MainWindow(QtWidgets.QMainWindow):
         return scroll
 
     def _collect_manual_df(self) -> pd.DataFrame:
+        """Collect manual input fields into a single-row DataFrame."""
         values: Dict[str, float] = {}
+        # Read all input fields and coerce to float/NaN.
         for col, line in self.inputs.items():
             text = line.text().strip()
             if text == "":
@@ -672,6 +701,7 @@ class MainWindow(QtWidgets.QMainWindow):
         text: str,
         icon: QtWidgets.QMessageBox.Icon = QtWidgets.QMessageBox.Information,
     ) -> None:
+        """Show a styled message box to the user."""
         box = QtWidgets.QMessageBox(self)
         box.setWindowTitle(title)
         box.setText(text)
@@ -689,6 +719,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _prepare_entries(
         self, result: Dict[str, object], header: str | None = None
     ) -> list[tuple[str, list[tuple[str, str]]]]:
+        """Format model output into display-ready entries."""
         class_names = result.get("class_names")
         probs = result.get("avg_probs")
         preds = result.get("preds")
@@ -700,9 +731,11 @@ class MainWindow(QtWidgets.QMainWindow):
         probs_arr = np.asarray(probs)
         preds_arr = np.asarray(preds)
         entries: list[tuple[str, list[tuple[str, str]]]] = []
+        # Convert per-row probabilities to top-k display lines.
         for i in range(len(preds_arr)):
             lines: list[tuple[str, str]] = []
             order = probs_arr[i].argsort()[::-1][: self.topk]
+            # Add the top-k classes with their percentages.
             for idx in order:
                 lines.append((class_names[int(idx)], f"{probs_arr[i][idx] * 100:.1f}%"))
             title = header or "Vorhersage"
@@ -714,6 +747,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _build_result_card(
         self, title: str, rows: list[tuple[str, str]]
     ) -> QtWidgets.QFrame:
+        """Create a styled card widget for one prediction result."""
         card = QtWidgets.QFrame()
         card.setStyleSheet(
             "QFrame { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; }"
@@ -749,6 +783,7 @@ class MainWindow(QtWidgets.QMainWindow):
         line.setStyleSheet("background-color: #e5e7eb; border: none;")
         lay.addWidget(line)
 
+        # Render each prediction row.
         for label, value in rows:
             row = QtWidgets.QHBoxLayout()
             row.setSpacing(8)
@@ -772,6 +807,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _show_result_dialog(
         self, entries: list[tuple[str, list[tuple[str, str]]]]
     ) -> None:
+        """Show the prediction results in a modal dialog."""
         dialog = QtWidgets.QDialog(self)
         dialog.setWindowTitle("Vorhersage")
         dialog.setModal(True)
@@ -801,6 +837,7 @@ class MainWindow(QtWidgets.QMainWindow):
         vbox.setContentsMargins(0, 0, 10, 0)
         vbox.setSpacing(12)
 
+        # Build a card for each entry.
         for title, rows in entries:
             vbox.addWidget(self._build_result_card(title, rows))
 
@@ -818,6 +855,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.exec_()
 
     def _on_csv_clicked(self):
+        """Open file dialog and start CSV inference."""
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "CSV auswählen", "", "CSV Dateien (*.csv)"
         )
@@ -826,6 +864,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._predict_csv_path(path)
 
     def _predict_csv_path(self, path: str):
+        """Start the simulated upload flow for a selected CSV."""
         if self.loading_timer.isActive():
             return
         self.pending_path = path
@@ -838,6 +877,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loading_timer.start(self.loading_interval_ms)
 
     def _tick_loading(self):
+        """Advance the upload progress animation."""
         if not self.progress_circle:
             return
         val = self.progress_circle.value() + self.loading_step
@@ -853,6 +893,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progress_circle.setValue(int(val))
 
     def _finish_loading(self):
+        """Finalize upload and add file to the list."""
         path = self.pending_path
         self.pending_path = None
         if self.drop_overlay:
@@ -861,6 +902,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._add_uploaded_file(path)
 
     def _cancel_loading(self):
+        """Cancel upload and reset UI state."""
         self.loading_timer.stop()
         path = self.pending_path
         self.pending_path = None
@@ -875,12 +917,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self._add_uploaded_file(path)
 
     def _add_uploaded_file(self, path: str):
+        """Add a file to the internal list and reveal widgets."""
         if path not in self.uploaded_files:
             self.uploaded_files.append(path)
             if len(self.uploaded_files) == 1:
                 self._show_upload_widgets()
 
     def _remove_uploaded_file(self, path: str):
+        """Remove a file entry from the list and hide widgets if empty."""
         if path in self.uploaded_files:
             self.uploaded_files.remove(path)
         entry = self.file_items.pop(path, None)
@@ -897,6 +941,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.start_btn.hide()
 
     def _ensure_file_item(self, path: str):
+        """Create a file row widget for the upload list if missing."""
         if path in self.file_items or not self.file_list_layout:
             return
         name = Path(path).name
@@ -947,6 +992,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_items[path] = {"row": row, "status": status_lbl}
 
     def _set_status(self, path: str, text: str, color: str):
+        """Update status text and color for an uploaded file."""
         if path not in self.file_items:
             self._ensure_file_item(path)
         entry = self.file_items.get(path)
@@ -958,6 +1004,7 @@ class MainWindow(QtWidgets.QMainWindow):
             lbl.setStyleSheet(f"color: {color}; font-size: 12px;")
 
     def _show_upload_widgets(self):
+        """Reveal upload list and action buttons once files exist."""
         if self.list_label_widget:
             self.list_label_widget.show()
         if self.file_list_container:
@@ -966,6 +1013,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.start_btn.show()
 
     def _on_start_clicked(self):
+        """Run ensemble inference for all queued CSV files."""
         if not self.uploaded_files:
             self._show_message(
                 "Hinweis",
@@ -974,6 +1022,7 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             return
         entries: list[tuple[str, list[tuple[str, str]]]] = []
+        # Process each uploaded CSV and aggregate entries.
         for p in self.uploaded_files:
             try:
                 result = self.ensemble.predict_csv(p, topk=self.topk)
@@ -984,6 +1033,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._show_result_dialog(entries)
 
     def _on_manual_clicked(self):
+        """Run inference on the manual single-row input."""
         try:
             df = self._collect_manual_df()
             result = self.ensemble.predict_dataframe(df, topk=self.topk)
@@ -994,6 +1044,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 def main():
+    """Launch the Qt application."""
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(STYLESHEET)
     window = MainWindow()

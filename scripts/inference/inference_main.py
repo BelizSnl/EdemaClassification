@@ -40,6 +40,7 @@ def _prepare_matrix(
 
 
 class EnsembleInference:
+    """Soft-voting ensemble for NN, SVM, and RF probability outputs."""
     def __init__(
         self,
         nn_model: str = "outputs/nn/model.pt",
@@ -49,6 +50,7 @@ class EnsembleInference:
         rf_model: str = "outputs/rf/model.joblib",
         temperature: float = 10.0,
     ):
+        """Load all model artifacts and prepare ensemble inference."""
         self.device = get_device()
         if temperature <= 0:
             raise ValueError("temperature muss > 0 sein.")
@@ -69,12 +71,14 @@ class EnsembleInference:
         self.feature_cols = self.nn_features
 
     def _validate_class_names(self):
+        """Ensure class order matches across NN/SVM/RF artifacts."""
         names_svm = self.svm_artifacts["class_names"]
         names_rf = self.rf_artifacts["class_names"]
         if names_svm != self.class_names or names_rf != self.class_names:
             raise ValueError("Klassen-Reihenfolge von NN/SVM/RF ist nicht identisch.")
 
     def _predict_nn(self, df: pd.DataFrame) -> np.ndarray:
+        """Run NN inference with temperature-scaled softmax."""
         X = _prepare_matrix(df, self.nn_features, self.nn_preproc, self.nn_bounds)
         xb = torch.tensor(X, dtype=torch.float32, device=self.device)
         with torch.no_grad():
@@ -83,6 +87,7 @@ class EnsembleInference:
         return probs
 
     def _predict_svm(self, df: pd.DataFrame) -> np.ndarray:
+        """Run SVM inference and return class probabilities."""
         art = self.svm_artifacts
         X = _prepare_matrix(
             df, art["feature_cols"], art["preprocessor"], art.get("col_bounds")
@@ -91,6 +96,7 @@ class EnsembleInference:
         return probs
 
     def _predict_rf(self, df: pd.DataFrame) -> np.ndarray:
+        """Run RF inference and return class probabilities."""
         art = self.rf_artifacts
         X = _prepare_matrix(
             df, art["feature_cols"], art["preprocessor"], art.get("col_bounds")
@@ -126,11 +132,13 @@ class EnsembleInference:
         }
 
     def predict_csv(self, csv_path: str, topk: int = 3) -> Dict[str, object]:
+        """Load a CSV and run ensemble inference."""
         df = pd.read_csv(csv_path)
         return self.predict_dataframe(df, topk=topk)
 
 
 def main():
+    """CLI entry point for ensemble inference."""
     ap = argparse.ArgumentParser(description="Soft-Voting Ensemble (NN + SVM + RF)")
     ap.add_argument("--csv", required=True, help="CSV mit neuen Fällen.")
     ap.add_argument("--topk", type=int, default=3)
